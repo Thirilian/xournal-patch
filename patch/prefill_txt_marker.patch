@@ -1,0 +1,13 @@
+diff --git a/src/core/control/LatexController.cpp b/src/core/control/LatexController.cpp
+index 2404662..450da48 100644
+--- a/src/core/control/LatexController.cpp
++++ b/src/core/control/LatexController.cpp
+@@ -339,7 +339,7 @@ void LatexController::insertLatex(PageRef page, Control* ctrl, double x, double
+             self->temporaryRender = img->cloneTexImage();
+             self->isValidTex = true;
+         } else if (auto* txt = dynamic_cast<const Text*>(self->selectedElem)) {
+-            self->initialTex = "\\text{" + txt->getText() + "}";
++            self->initialTex = "%txt\n" + txt->getText();
+         } else {
+             xoj_assert(false);
+         }

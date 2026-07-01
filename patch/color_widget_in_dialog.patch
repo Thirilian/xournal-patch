@@ -1,0 +1,97 @@
+diff --git a/src/core/gui/dialog/IntEdLatexDialog.cpp b/src/core/gui/dialog/IntEdLatexDialog.cpp
+index da170d3..0873118 100644
+--- a/src/core/gui/dialog/IntEdLatexDialog.cpp
++++ b/src/core/gui/dialog/IntEdLatexDialog.cpp
+@@ -27,10 +27,14 @@
+ #include <gtksourceview/gtksource.h>  // for GTK_SOURCE_VIEW, gtk_sou...
+ #endif
+ 
++#include "control/Control.h"
+ #include "control/LatexController.h"
++#include "control/Tool.h"
++#include "control/ToolHandler.h"
+ #include "control/settings/LatexSettings.h"  // for LatexSettings
+ #include "gui/Builder.h"
+ #include "model/Font.h"        // for XojFont
++#include "util/Color.h"        // for rgb_to_GdkRGBA, GdkRGBA_to_argb
+ #include "util/StringUtils.h"  // for replace_pair, StringUtils
+ #include "util/raii/CStringWrapper.h"
+ 
+@@ -49,6 +53,26 @@ IntEdLatexDialog::IntEdLatexDialog(GladeSearchpath* gladeSearchPath, std::unique
+ 
+     populateStandardWidgetsFromBuilder(builder);
+ 
++    /*
++     * Color button: lets the user change the formula's color without leaving/closing this dialog
++     * (the dialog is modal, so the main window's toolbar color picker is otherwise unreachable).
++     * Changing it updates the TOOL_LATEX tool color (the same one read at compile time) and
++     * triggers a recompile so the preview reflects the new color immediately.
++     */
++    GtkColorButton* colorButton = GTK_COLOR_BUTTON(builder.get("btColor"));
++    Control* ctrlPtr = texCtrl->control;
++    GdkRGBA initialColor = Util::rgb_to_GdkRGBA(ctrlPtr->getToolHandler()->getTool(TOOL_LATEX).getColor());
++    gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(colorButton), &initialColor);
++    g_signal_connect(colorButton, "color-set", G_CALLBACK(+[](GtkColorButton* btn, gpointer d) {
++                         auto texCtrl = static_cast<LatexController*>(d);
++                         GdkRGBA newColor;
++                         gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(btn), &newColor);
++                         texCtrl->control->getToolHandler()->getTool(TOOL_LATEX).setColor(
++                                 Util::GdkRGBA_to_argb(newColor));
++                         LatexController::handleTexChanged(texCtrl);
++                     }),
++                     texCtrl.get());
++
+ #ifdef ENABLE_GTK_SOURCEVIEW
+     this->texBox = gtk_source_view_new();
+ #else
+diff --git a/ui/intEdTexDialog.glade b/ui/intEdTexDialog.glade
+index 468ce6c..e9f7b13 100644
+--- a/ui/intEdTexDialog.glade
++++ b/ui/intEdTexDialog.glade
+@@ -30,13 +30,41 @@
+         <property name="margin-bottom">10</property>
+         <property name="orientation">vertical</property>
+         <child>
+-          <object class="GtkLabel" id="labelTitle">
+-            <property name="name">labelTitle</property>
++          <object class="GtkBox" id="titleRow">
+             <property name="visible">True</property>
+             <property name="can-focus">False</property>
+-            <property name="label" translatable="yes">Enter / edit LaTeX Text</property>
+-            <property name="use-markup">True</property>
+-            <property name="justify">center</property>
++            <property name="orientation">horizontal</property>
++            <property name="spacing">4</property>
++            <child>
++              <object class="GtkLabel" id="labelTitle">
++                <property name="name">labelTitle</property>
++                <property name="visible">True</property>
++                <property name="can-focus">False</property>
++                <property name="label" translatable="yes">Enter / edit LaTeX Text</property>
++                <property name="use-markup">True</property>
++                <property name="justify">center</property>
++                <property name="hexpand">True</property>
++              </object>
++              <packing>
++                <property name="expand">True</property>
++                <property name="fill">True</property>
++                <property name="position">0</property>
++              </packing>
++            </child>
++            <child>
++              <object class="GtkColorButton" id="btColor">
++                <property name="visible">True</property>
++                <property name="can-focus">True</property>
++                <property name="receives-default">True</property>
++                <property name="use-alpha">False</property>
++                <property name="tooltip-text" translatable="yes">Formula color</property>
++              </object>
++              <packing>
++                <property name="expand">False</property>
++                <property name="fill">False</property>
++                <property name="position">1</property>
++              </packing>
++            </child>
+           </object>
+           <packing>
+             <property name="expand">False</property>
