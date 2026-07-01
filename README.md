@@ -29,6 +29,8 @@ This patch will modify the behaviour of the "Add/edit Tex equation" :
 
 Clicking the tool won't do anything anymore. You will have to click a spot of your page to open the integrated editor. When you are done, the Tex formula's image will be generated where you clicked at the begining. 
 
+Warning : the Tex Editor tool will have its own color, to select after selecting the Tex editor tool. It is independent from the textbox's color.
+
 Important : the formula will apear below right from your cursor. This is intentionnal, as it avoids conflict with the behaviour of selecting an existant textbox with the equation tool.
 <img width="1179" height="95" alt="image" src="https://github.com/user-attachments/assets/3a8df604-650f-474d-ae54-fe95ff4a261c" />
 <img width="1179" height="123" alt="image" src="https://github.com/user-attachments/assets/cf887d07-683f-4b07-a069-f831d6a35246" />
@@ -46,3 +48,19 @@ A new formula will apear as a Tex image with the required size, if it is created
 With this script, the size of the image will be recalculated when editing a formula, to preserve the image size while preserving a potential personalised ratio customized from the user. It will take into acount the size of the pdf befor and after edition, as well as the size of the box before edition to rescale it if needed.
 
 Special case for textboxes. If editing starting from a textbox, the formula box's scale will be ajusted to make the text just as big as the text in the textbox originally was. This considers 12pt to be the "normal fontsize" to wich the formula would be generated with a normal scale.
+
+### Patch #4 : apply_force_recompile.py
+Warning : This patch is useless if you use the patch #5, wich already implements this functionnality
+
+When you want to change a tex image's color, you have to change the Tex editor tool's color, open the equation and type something to force recompilation with the correct color.
+
+This patch only implements a unique forced recompilation when you open an existing texbox for edition
+
+### Patch #5 : apply_force_recompile.py
+This patch adds a wiget allowing the user to change the %%XPP_TEXT_COLOR%% (equation's global color) directly while typing the equation. 
+
+This will force a compilation, so the color is updated on the formula.
+
+
+### Patch #6 : apply_paste_follow_cursor.py
+pending
