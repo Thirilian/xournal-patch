@@ -1,6 +1,6 @@
 # Dépendances de compilation
 sudo apt-get update
-sudo apt-get install cmake ninja-build libgtk-3-dev libpoppler-glib-dev portaudio19-dev libsndfile-dev \
+sudo apt-get install wget cmake ninja-build libgtk-3-dev libpoppler-glib-dev portaudio19-dev libsndfile-dev \
   dvipng texlive libxml2-dev liblua5.4-dev libzip-dev librsvg2-dev gettext \
   libgtksourceview-4-dev help2man libqpdf-dev git
 
@@ -10,10 +10,12 @@ git clone https://github.com/xournalpp/xournalpp
 cd xournalpp
 
 # Appliquer le patch
-cp /home/vincent/Documents/Installlinux/Setting_files/Xournal/patch_click_where_you_want/apply_follow_cursor.py .
-cp /home/vincent/Documents/Installlinux/Setting_files/Xournal/patch_click_where_you_want/apply_txt_prefill.py .
+wget https://github.com/Thirilian/xournal-patch/blob/main/apply_follow_cursor.py
+wget https://github.com/Thirilian/xournal-patch/blob/main/apply_txt_prefill.py
+wget https://github.com/Thirilian/xournal-patch/blob/main/apply_resize_ratio_v3.py
 python3 apply_follow_cursor.py
 python3 apply_txt_prefill.py
+python3 apply_resize_ratio_v3.py
 
 # Vérification rapide que tout s'est bien appliqué (chaque commande doit renvoyer 1) :
 grep -c "void beginFloatingPlacement();" src/core/gui/PageView.h # censé renvoyer 1
