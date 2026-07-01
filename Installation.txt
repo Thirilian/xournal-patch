@@ -1,0 +1,31 @@
+# Dépendances de compilation
+sudo apt-get update
+sudo apt-get install cmake ninja-build libgtk-3-dev libpoppler-glib-dev portaudio19-dev libsndfile-dev \
+  dvipng texlive libxml2-dev liblua5.4-dev libzip-dev librsvg2-dev gettext \
+  libgtksourceview-4-dev help2man libqpdf-dev git
+
+# cloner les sources
+cd ~/Documents
+git clone https://github.com/xournalpp/xournalpp
+cd xournalpp
+
+# Appliquer le patch
+cp /home/vincent/Documents/Installlinux/Setting_files/Xournal/patch_click_where_you_want/fix_all_duplicates.py .
+python3 apply_follow_cursor.py
+
+# Vérification rapide que tout s'est bien appliqué (chaque commande doit renvoyer 1) :
+grep -c "void beginFloatingPlacement();" src/core/gui/PageView.h
+grep -c "bool awaitingFloatingPlacement = false;" src/core/gui/PageView.h
+grep -c "isNewFormula" src/core/control/LatexController.cpp
+
+# Compiler
+mkdir build
+cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=install -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build .
+cmake --build . --target install
+
+sudo cp ~/Documents/xournalpp/build/install/bin/xournalpp /usr/bin/xournalpp
+
+# retirer les fichiers de build
+rm -rf ~/Documents/xournalpp
