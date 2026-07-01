@@ -14,9 +14,9 @@ cp /home/vincent/Documents/Installlinux/Setting_files/Xournal/patch_click_where_
 python3 apply_follow_cursor.py
 
 # Vérification rapide que tout s'est bien appliqué (chaque commande doit renvoyer 1) :
-grep -c "void beginFloatingPlacement();" src/core/gui/PageView.h
-grep -c "bool awaitingFloatingPlacement = false;" src/core/gui/PageView.h
-grep -c "isNewFormula" src/core/control/LatexController.cpp
+grep -c "void beginFloatingPlacement();" src/core/gui/PageView.h # censé renvoyer 1
+grep -c "bool awaitingFloatingPlacement = false;" src/core/gui/PageView.h # censé renvoyer 1
+grep -c "isNewFormula" src/core/control/LatexController.cpp # censé renvoyer 2
 
 # Compiler
 mkdir build
