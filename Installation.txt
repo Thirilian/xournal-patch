@@ -10,9 +10,9 @@ git clone https://github.com/xournalpp/xournalpp
 cd xournalpp
 
 # Appliquer le patch
-curl -O https://raw.githubusercontent.com/Thirilian/xournal-patch/blob/main/apply_follow_cursor.py
-curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/blob/main/apply_txt_prefill.py
-curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/blob/main/apply_resize_ratio_v3.py
+curl -O https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_follow_cursor.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_txt_prefill.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_resize_ratio_v3.py
 python3 apply_follow_cursor.py
 python3 apply_txt_prefill.py
 python3 apply_resize_ratio_v3.py
