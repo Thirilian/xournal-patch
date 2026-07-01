@@ -11,7 +11,9 @@ cd xournalpp
 
 # Appliquer le patch
 cp /home/vincent/Documents/Installlinux/Setting_files/Xournal/patch_click_where_you_want/apply_follow_cursor.py .
+cp /home/vincent/Documents/Installlinux/Setting_files/Xournal/patch_click_where_you_want/apply_txt_prefill.py .
 python3 apply_follow_cursor.py
+python3 apply_txt_prefill.py
 
 # Vérification rapide que tout s'est bien appliqué (chaque commande doit renvoyer 1) :
 grep -c "void beginFloatingPlacement();" src/core/gui/PageView.h # censé renvoyer 1
