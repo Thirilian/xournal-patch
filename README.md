@@ -18,7 +18,7 @@ The repo can be found here : https://github.com/Thirilian/xournal_latex_compilin
 ## How to use
 To install all available patches,  download and run the Installation.txt file (it's a script but it was meant to be instructions)
 ``` shell 
-wget https://raw.githubusercontent.com/Thirilian/xournal-patch/main/Installation.txt
+curl -O https://raw.githubusercontent.com/Thirilian/xournal-patch/main/Installation.txt
 sudo chmod 677 Installation.txt
 bash Installation.txt
 ```
