@@ -10,7 +10,7 @@ git clone https://github.com/xournalpp/xournalpp
 cd xournalpp
 
 # Appliquer le patch
-cp /home/vincent/Documents/Installlinux/Setting_files/Xournal/patch_click_where_you_want/fix_all_duplicates.py .
+cp /home/vincent/Documents/Installlinux/Setting_files/Xournal/patch_click_where_you_want/apply_follow_cursor.py .
 python3 apply_follow_cursor.py
 
 # Vérification rapide que tout s'est bien appliqué (chaque commande doit renvoyer 1) :
