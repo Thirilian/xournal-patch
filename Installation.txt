@@ -1,4 +1,3 @@
-#!/bin/bash
 # Dépendances de compilation
 sudo apt-get update
 sudo apt-get install wget cmake ninja-build libgtk-3-dev libpoppler-glib-dev portaudio19-dev libsndfile-dev \
@@ -11,9 +10,9 @@ git clone https://github.com/xournalpp/xournalpp
 cd xournalpp
 
 # Appliquer le patch
-wget https://github.com/Thirilian/xournal-patch/blob/main/apply_follow_cursor.py
-wget https://github.com/Thirilian/xournal-patch/blob/main/apply_txt_prefill.py
-wget https://github.com/Thirilian/xournal-patch/blob/main/apply_resize_ratio_v3.py
+wget https://raw.githubusercontent.com/Thirilian/xournal-patch/blob/main/apply_follow_cursor.py
+wget https://raw.githubusercontent.com/Thirilian/xournal-patch/blob/main/apply_txt_prefill.py
+wget https://raw.githubusercontent.com/Thirilian/xournal-patch/blob/main/apply_resize_ratio_v3.py
 python3 apply_follow_cursor.py
 python3 apply_txt_prefill.py
 python3 apply_resize_ratio_v3.py
