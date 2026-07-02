@@ -31,11 +31,13 @@ mkdir build
 cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=install -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build .
-cmake --build . --target install
-cmake --install . --prefix /usr/local # Replace xournalapp /usr/bin/xournalpp binary with the app you built
-                                      # Can lead to unexpected behaviours. Do it at your own risks
-                                      # In case of problems, reinstall xournalapp from your system package handler
+sudo cmake --build . --target install
+sudo cmake --install . --prefix /usr/local # Replace xournalapp /usr/bin/xournalpp binary with the app you built
+                                           # Can lead to unexpected behaviours. Do it at your own risks
+                                           # In case of problems, reinstall xournalapp from your system package handler
 
 # retirer les fichiers de build
 cd
 rm -rf ~/Documents/xournalpp
+
+xournalapp # launch xournal after build and installation
