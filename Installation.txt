@@ -38,6 +38,6 @@ sudo cmake --install . --prefix /usr/local # Replace xournalapp /usr/bin/xournal
 
 # retirer les fichiers de build
 cd
-rm -rf ~/Documents/xournalpp
+sudo rm -rf ~/Documents/xournalpp
 
-xournalapp # launch xournal after build and installation
+xournalpp # launch xournal after build and installation
