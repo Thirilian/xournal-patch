@@ -1,0 +1,336 @@
+diff --git a/src/core/control/Control.cpp b/src/core/control/Control.cpp
+index abf1640..53659fe 100644
+--- a/src/core/control/Control.cpp
++++ b/src/core/control/Control.cpp
+@@ -40,12 +40,14 @@
+ #include "control/xojfile/LoadHandler.h"                         // for Load...
+ #include "control/zoom/ZoomControl.h"                            // for Zoom...
+ #include "gui/FloatingToolbox.h"                                 // for Floa...
++#include "gui/Layout.h"                                          // for Layout
+ #include "gui/MainWindow.h"                                      // for Main...
+ #include "gui/PageView.h"                                        // for XojP...
+ #include "gui/PdfFloatingToolbox.h"                              // for PdfF...
+ #include "gui/SearchBar.h"                                       // for Sear...
+ #include "gui/XournalView.h"                                     // for Xour...
+ #include "gui/XournalppCursor.h"                                 // for Xour...
++#include "gui/widgets/XournalWidget.h"                           // for GTK_XOURNAL
+ #include "gui/dialog/AboutDialog.h"                              // for Abou...
+ #include "gui/dialog/FormatDialog.h"                             // for Form...
+ #include "gui/dialog/GotoDialog.h"                               // for Goto...
+@@ -2383,6 +2385,149 @@ void Control::clipboardPasteImage(GdkPixbuf* img) {
+     clipboardPaste(std::move(image));
+ }
+ 
++/**
++ * If the mouse pointer is currently over a page, returns that page's XojPageView along with the
++ * pointer's position on that page, in document units (matching Element::setX/setY's convention).
++ * Returns nullptr if the pointer isn't over the canvas or isn't over any page (e.g. paste
++ * triggered via a keyboard shortcut while the mouse happens to be elsewhere on screen).
++ */
++static XojPageView* getPageViewAndPosUnderCursor(XournalView* xournal, double& outX, double& outY) {
++    GtkWidget* widget = xournal->getWidget();
++    GdkWindow* window = gtk_widget_get_window(widget);
++    if (!window) {
++        return nullptr;
++    }
++
++    GdkDisplay* display = gdk_display_get_default();
++    GdkSeat* seat = display ? gdk_display_get_default_seat(display) : nullptr;
++    GdkDevice* pointer = seat ? gdk_seat_get_pointer(seat) : nullptr;
++    if (!pointer) {
++        return nullptr;
++    }
++
++    gint widgetX = 0;
++    gint widgetY = 0;
++    GdkModifierType mask;
++    gdk_window_get_device_position(window, pointer, &widgetX, &widgetY, &mask);
++
++    // Convert from viewport-relative to layout-absolute pixel coordinates (same convention as
++    // InputEvent::relative, see AbstractInputHandler::getPageAtCurrentPosition()).
++    GtkXournal* gtkXournal = GTK_XOURNAL(widget);
++    double layoutX = widgetX + (gtkXournal->hadjustment ? gtk_adjustment_get_value(gtkXournal->hadjustment) : 0.0);
++    double layoutY = widgetY + (gtkXournal->vadjustment ? gtk_adjustment_get_value(gtkXournal->vadjustment) : 0.0);
++
++    XojPageView* pageView = xournal->getLayout()->getPageViewAt(static_cast<int>(layoutX), static_cast<int>(layoutY));
++    if (!pageView) {
++        return nullptr;
++    }
++
++    auto pagePos = pageView->getPixelPosition();
++    double zoom = xournal->getZoom();
++    outX = (layoutX - pagePos.x) / zoom;
++    outY = (layoutY - pagePos.y) / zoom;
++    return pageView;
++}
++
++/**
++ * Grabs the given (just-created) selection at its own center and puts it into "moving" state, so
++ * that it follows the mouse pointer on every subsequent motion event (see the handleSelectionMove
++ * branch in PenInputHandler::actionMotion(), which moves any selection whose isMoving() is true,
++ * regardless of whether a mouse button is actually held down). The very next click on the canvas
++ * then finalizes its position and page, exactly like ending a normal click-and-drag - no further
++ * code is needed for that part, it is already handled by the existing selection-click logic in
++ * PenInputHandler::actionStart()/actionEnd().
++ */
++static void beginFloatingPlacement(EditSelection* selection) {
++    double zoom = selection->getView()->getXournal()->getZoom();
++    double grabX = zoom * (selection->getXOnView() + selection->getWidth() / 2);
++    double grabY = zoom * (selection->getYOnView() + selection->getHeight() / 2);
++    selection->mouseDown(CURSOR_SELECTION_MOVE, grabX, grabY);
++}
++
++/**
++ * Half-extent (in document points) of the cross mark, i.e. the diagonal reaches this far from the
++ * center in each direction. Total visual span of the cross is 2 * CROSS_MARK_SIZE.
++ */
++constexpr double CROSS_MARK_SIZE = 2.5;
++
++/**
++ * Half-length (in document points) of the tick marks. Total length of a tick is 2 * TICK_MARK_SIZE.
++ */
++constexpr double TICK_MARK_SIZE = 3.;
++
++/**
++ * Creates a small Stroke (a cross or a tick mark, depending on localOffsets) using the currently
++ * selected tool's color and thickness, spawns it under the mouse pointer (or at the center of the
++ * visible area if the pointer isn't over any page), and attaches it to the pointer until the next
++ * left click - same mechanism as clipboardPaste()/clipboardPasteXournal() above.
++ * localOffsets are pairs of (dx, dy), in document points, relative to the spawn point.
++ */
++static void createFloatingMark(Control* ctrl, XournalView* xournal,
++                                const std::vector<std::pair<double, double>>& localOffsets) {
++    double x = 0;
++    double y = 0;
++    XojPageView* view = getPageViewAndPosUnderCursor(xournal, x, y);
++    if (!view) {
++        auto pageNr = ctrl->getCurrentPageNo();
++        if (pageNr == npos) {
++            return;
++        }
++        view = xournal->getViewFor(pageNr);
++        if (!view) {
++            return;
++        }
++        xournal->getPasteTarget(x, y);
++    }
++
++    ToolHandler* toolHandler = ctrl->getToolHandler();
++    auto stroke = std::make_unique<Stroke>();
++    if (toolHandler->isDrawingTool()) {
++        stroke->setWidth(toolHandler->getThickness());
++        stroke->setColor(toolHandler->getColor());
++    } else {
++        // The active tool has no thickness of its own (e.g. a selection tool, the hand tool...),
++        // which would otherwise produce an invisible 0-width stroke. Fall back to the pen's
++        // settings, same as GeometryToolController::markOrigin() does.
++        stroke->setWidth(toolHandler->getToolThickness(TOOL_PEN)[TOOL_SIZE_FINE]);
++        stroke->setColor(toolHandler->getTool(TOOL_PEN).getColor());
++    }
++    for (auto&& [dx, dy]: localOffsets) {
++        stroke->addPoint(Point(x + dx, y + dy));
++    }
++
++    Document* doc = ctrl->getDocument();
++    doc->lock_shared();
++    PageRef page = view->getPage();
++    Layer* layer = page->getSelectedLayer();
++    doc->unlock_shared();
++
++    UndoRedoHandler* undoRedo = ctrl->getUndoRedoHandler();
++    Stroke* rawStroke = stroke.get();
++    undoRedo->addUndoAction(std::make_unique<InsertUndoAction>(page, layer, rawStroke));
++    auto sel = SelectionFactory::createFromFloatingElement(ctrl, page, layer, view, std::move(stroke));
++
++    EditSelection* selection = sel.release();
++    xournal->setSelection(selection);
++    beginFloatingPlacement(selection);
++}
++
++void Control::insertCross() {
++    createFloatingMark(this, win->getXournal(),
++                        {{CROSS_MARK_SIZE, CROSS_MARK_SIZE},
++                         {-CROSS_MARK_SIZE, -CROSS_MARK_SIZE},
++                         {0, 0},
++                         {CROSS_MARK_SIZE, -CROSS_MARK_SIZE},
++                         {-CROSS_MARK_SIZE, CROSS_MARK_SIZE}});
++}
++
++void Control::insertTickHorizontal() {
++    createFloatingMark(this, win->getXournal(), {{-TICK_MARK_SIZE, 0}, {TICK_MARK_SIZE, 0}});
++}
++
++void Control::insertTickVertical() {
++    createFloatingMark(this, win->getXournal(), {{0, -TICK_MARK_SIZE}, {0, TICK_MARK_SIZE}});
++}
++
+ void Control::clipboardPaste(ElementPtr e) {
+     double x = 0;
+     double y = 0;
+@@ -2396,18 +2541,26 @@ void Control::clipboardPaste(ElementPtr e) {
+         return;
+     }
+ 
+-    this->doc->lock_shared();
+-    PageRef page = this->doc->getPage(pageNr);
+-    Layer* layer = page->getSelectedLayer();
+-    this->doc->unlock_shared();
+-
+-    win->getXournal()->getPasteTarget(x, y);
+-
+     double width = e->getElementWidth();
+     double height = e->getElementHeight();
+ 
+-    x = std::max(0.0, x - width / 2);
+-    y = std::max(0.0, y - height / 2);
++    // Prefer spawning the element under the mouse pointer; fall back to the center of the
++    // visible area if the pointer isn't over any page (e.g. paste triggered from a menu with the
++    // mouse elsewhere on screen).
++    if (XojPageView* cursorView = getPageViewAndPosUnderCursor(win->getXournal(), x, y)) {
++        view = cursorView;
++        x = std::max(0.0, x - width / 2);
++        y = std::max(0.0, y - height / 2);
++    } else {
++        win->getXournal()->getPasteTarget(x, y);
++        x = std::max(0.0, x - width / 2);
++        y = std::max(0.0, y - height / 2);
++    }
++
++    this->doc->lock_shared();
++    PageRef page = view->getPage();
++    Layer* layer = page->getSelectedLayer();
++    this->doc->unlock_shared();
+ 
+     e->setX(x);
+     e->setY(y);
+@@ -2415,7 +2568,9 @@ void Control::clipboardPaste(ElementPtr e) {
+     undoRedo->addUndoAction(std::make_unique<InsertUndoAction>(page, layer, e.get()));
+     auto sel = SelectionFactory::createFromFloatingElement(this, page, layer, view, std::move(e));
+ 
+-    win->getXournal()->setSelection(sel.release());
++    EditSelection* selection = sel.release();
++    win->getXournal()->setSelection(selection);
++    beginFloatingPlacement(selection);
+ }
+ 
+ void Control::registerPluginToolButtons(ToolMenuHandler* toolMenuHandler) {
+@@ -2485,8 +2640,18 @@ void Control::clipboardPasteXournal(ObjectInputStream& in) {
+ 
+         double x = 0;
+         double y = 0;
+-        // calculate x/y of paste target, see clipboardPaste(Element* e)
+-        win->getXournal()->getPasteTarget(x, y);
++        // Prefer the current mouse position if it happens to be over the same page this selection
++        // is tied to; otherwise fall back to the center of the visible area (e.g. paste triggered
++        // from a menu with the mouse elsewhere on screen, or hovering a different page - the user
++        // can still drag the floating selection onto another page afterwards).
++        double cursorX = 0;
++        double cursorY = 0;
++        if (getPageViewAndPosUnderCursor(win->getXournal(), cursorX, cursorY) == view) {
++            x = cursorX;
++            y = cursorY;
++        } else {
++            win->getXournal()->getPasteTarget(x, y);
++        }
+ 
+         x = std::max(0.0, x - selection->getWidth() / 2);
+         y = std::max(0.0, y - selection->getHeight() / 2);
+@@ -2496,10 +2661,10 @@ void Control::clipboardPasteXournal(ObjectInputStream& in) {
+         auto dy = y - selection->getYOnView();
+ 
+         selection->moveSelection(dx, dy);
+-        // update all Elements (same procedure as moving a element selection by hand and releasing the mouse button)
+-        selection->mouseUp();
+ 
+-        win->getXournal()->setSelection(selection.release());
++        EditSelection* rawSelection = selection.release();
++        win->getXournal()->setSelection(rawSelection);
++        beginFloatingPlacement(rawSelection);
+     } catch (const std::exception& e) {
+         g_warning("could not paste, Exception occurred: %s", e.what());
+         Stacktrace::printStacktrace();
+diff --git a/src/core/control/Control.h b/src/core/control/Control.h
+index fd86ee5..ed61625 100644
+--- a/src/core/control/Control.h
++++ b/src/core/control/Control.h
+@@ -336,6 +336,25 @@ public:
+     bool cut();
+     bool paste();
+ 
++    /**
++     * Insert a small cross mark (same shape/size as GeometryToolController::markOrigin()), attached
++     * to the mouse pointer until the next left click. Uses the currently selected tool's color and
++     * thickness.
++     */
++    void insertCross();
++
++    /**
++     * Insert a short horizontal tick mark, attached to the mouse pointer until the next left click.
++     * Uses the currently selected tool's color and thickness.
++     */
++    void insertTickHorizontal();
++
++    /**
++     * Insert a short vertical tick mark, attached to the mouse pointer until the next left click.
++     * Uses the currently selected tool's color and thickness.
++     */
++    void insertTickVertical();
++
+     void help();
+ 
+     void selectAlpha(OpacityFeature feature);
+diff --git a/src/core/control/actions/ActionProperties.h b/src/core/control/actions/ActionProperties.h
+index cab999b..c46d95d 100644
+--- a/src/core/control/actions/ActionProperties.h
++++ b/src/core/control/actions/ActionProperties.h
+@@ -182,6 +182,21 @@ struct ActionProperties<Action::PASTE> {
+     static void callback(GSimpleAction*, GVariant*, Control* ctrl) { ctrl->paste(); }
+ };
+ template <>
++struct ActionProperties<Action::INSERT_CROSS> {
++    static constexpr const char* accelerators[] = {"<Ctrl>K", nullptr};
++    static void callback(GSimpleAction*, GVariant*, Control* ctrl) { ctrl->insertCross(); }
++};
++template <>
++struct ActionProperties<Action::INSERT_TICK_HORIZONTAL> {
++    static constexpr const char* accelerators[] = {"<Ctrl>J", nullptr};
++    static void callback(GSimpleAction*, GVariant*, Control* ctrl) { ctrl->insertTickHorizontal(); }
++};
++template <>
++struct ActionProperties<Action::INSERT_TICK_VERTICAL> {
++    static constexpr const char* accelerators[] = {"<Ctrl><Shift>J", nullptr};
++    static void callback(GSimpleAction*, GVariant*, Control* ctrl) { ctrl->insertTickVertical(); }
++};
++template <>
+ struct ActionProperties<Action::SEARCH> {
+     static void callback(GSimpleAction*, GVariant*, Control* ctrl) {
+         ctrl->clearSelectionEndText();
+diff --git a/src/core/enums/Action.enum.h b/src/core/enums/Action.enum.h
+index 8040865..fa263a7 100644
+--- a/src/core/enums/Action.enum.h
++++ b/src/core/enums/Action.enum.h
+@@ -175,6 +175,11 @@ enum class Action : size_t {
+     // Miscellaneous
+     POSITION_HIGHLIGHTING,
+ 
++    // Floating marks (cross / tick marks), spawn attached to the cursor until the next left click
++    INSERT_CROSS,
++    INSERT_TICK_HORIZONTAL,
++    INSERT_TICK_VERTICAL,
++
+     // Keep this last value
+     ENUMERATOR_COUNT
+ };
+diff --git a/src/core/enums/generated/Action.NameMap.generated.h b/src/core/enums/generated/Action.NameMap.generated.h
+index f6cc124..322b9b9 100644
+--- a/src/core/enums/generated/Action.NameMap.generated.h
++++ b/src/core/enums/generated/Action.NameMap.generated.h
+@@ -119,4 +119,7 @@ constexpr const char* ACTION_NAMES[] = {  // Action to string conversion map
+         "layer-goto-previous",
+         "layer-goto-top",
+         "layer-active",
+-        "position-highlighting"};
++        "position-highlighting",
++        "insert-cross",
++        "insert-tick-horizontal",
++        "insert-tick-vertical"};
