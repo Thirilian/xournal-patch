@@ -1,8 +1,16 @@
 diff --git a/src/core/gui/dialog/IntEdLatexDialog.cpp b/src/core/gui/dialog/IntEdLatexDialog.cpp
-index da170d3..0873118 100644
+index da170d3..c067da1 100644
 --- a/src/core/gui/dialog/IntEdLatexDialog.cpp
 +++ b/src/core/gui/dialog/IntEdLatexDialog.cpp
-@@ -27,10 +27,14 @@
+@@ -13,6 +13,7 @@
+ 
+ #include "IntEdLatexDialog.h"
+ 
++#include <array>    // for std::array
+ #include <sstream>  // for operator<<, basic_ostream
+ #include <utility>  // for move
+ 
+@@ -27,10 +28,14 @@
  #include <gtksourceview/gtksource.h>  // for GTK_SOURCE_VIEW, gtk_sou...
  #endif
  
@@ -17,7 +25,7 @@ index da170d3..0873118 100644
  #include "util/StringUtils.h"  // for replace_pair, StringUtils
  #include "util/raii/CStringWrapper.h"
  
-@@ -49,6 +53,26 @@ IntEdLatexDialog::IntEdLatexDialog(GladeSearchpath* gladeSearchPath, std::unique
+@@ -49,6 +54,46 @@ IntEdLatexDialog::IntEdLatexDialog(GladeSearchpath* gladeSearchPath, std::unique
  
      populateStandardWidgetsFromBuilder(builder);
  
@@ -31,6 +39,26 @@ index da170d3..0873118 100644
 +    Control* ctrlPtr = texCtrl->control;
 +    GdkRGBA initialColor = Util::rgb_to_GdkRGBA(ctrlPtr->getToolHandler()->getTool(TOOL_LATEX).getColor());
 +    gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(colorButton), &initialColor);
++
++    // The Xournal Palette (xournal.gpl), added as a custom section in the color button's popover.
++    // This does not affect the dialog's width: the palette lives in a popup, not inline.
++    static const std::array<GdkRGBA, 12> xournalPalette = {
++            Util::rgb_to_GdkRGBA(Color(0xff000000U)),  // Black
++            Util::rgb_to_GdkRGBA(Color(0xff008000U)),  // Green
++            Util::rgb_to_GdkRGBA(Color(0xff00c0ffU)),  // Light Blue
++            Util::rgb_to_GdkRGBA(Color(0xff00ff00U)),  // Light Green
++            Util::rgb_to_GdkRGBA(Color(0xff3333ccU)),  // Blue
++            Util::rgb_to_GdkRGBA(Color(0xff808080U)),  // Gray
++            Util::rgb_to_GdkRGBA(Color(0xff823c9bU)),  // Purple
++            Util::rgb_to_GdkRGBA(Color(0xffff0000U)),  // Red
++            Util::rgb_to_GdkRGBA(Color(0xffff00ffU)),  // Magenta
++            Util::rgb_to_GdkRGBA(Color(0xffff8000U)),  // Orange
++            Util::rgb_to_GdkRGBA(Color(0xffffc800U)),  // Yellow
++            Util::rgb_to_GdkRGBA(Color(0xffffffffU)),  // White
++    };
++    gtk_color_chooser_add_palette(GTK_COLOR_CHOOSER(colorButton), GTK_ORIENTATION_HORIZONTAL, 6,
++                                   static_cast<int>(xournalPalette.size()), const_cast<GdkRGBA*>(xournalPalette.data()));
++
 +    g_signal_connect(colorButton, "color-set", G_CALLBACK(+[](GtkColorButton* btn, gpointer d) {
 +                         auto texCtrl = static_cast<LatexController*>(d);
 +                         GdkRGBA newColor;
@@ -45,32 +73,42 @@ index da170d3..0873118 100644
      this->texBox = gtk_source_view_new();
  #else
 diff --git a/ui/intEdTexDialog.glade b/ui/intEdTexDialog.glade
-index 468ce6c..e9f7b13 100644
+index 468ce6c..191b50a 100644
 --- a/ui/intEdTexDialog.glade
 +++ b/ui/intEdTexDialog.glade
-@@ -30,13 +30,41 @@
-         <property name="margin-bottom">10</property>
-         <property name="orientation">vertical</property>
+@@ -156,18 +156,46 @@
+           </packing>
+         </child>
          <child>
--          <object class="GtkLabel" id="labelTitle">
--            <property name="name">labelTitle</property>
-+          <object class="GtkBox" id="titleRow">
+-          <object class="GtkLabel" id="texErrorLabel">
++          <object class="GtkBox" id="errorAndColorRow">
              <property name="visible">True</property>
              <property name="can-focus">False</property>
--            <property name="label" translatable="yes">Enter / edit LaTeX Text</property>
--            <property name="use-markup">True</property>
--            <property name="justify">center</property>
+-            <property name="opacity">0</property>
+-            <property name="margin-start">4</property>
+-            <property name="margin-end">4</property>
+-            <property name="margin-top">4</property>
+-            <property name="margin-bottom">4</property>
+-            <property name="label">The formula is empty when rendered or invalid.</property>
+-            <attributes>
+-              <attribute name="foreground" value="#e0e01b1b2424"/>
+-            </attributes>
 +            <property name="orientation">horizontal</property>
 +            <property name="spacing">4</property>
 +            <child>
-+              <object class="GtkLabel" id="labelTitle">
-+                <property name="name">labelTitle</property>
++              <object class="GtkLabel" id="texErrorLabel">
 +                <property name="visible">True</property>
 +                <property name="can-focus">False</property>
-+                <property name="label" translatable="yes">Enter / edit LaTeX Text</property>
-+                <property name="use-markup">True</property>
-+                <property name="justify">center</property>
++                <property name="opacity">0</property>
++                <property name="margin-start">4</property>
++                <property name="margin-end">4</property>
++                <property name="margin-top">4</property>
++                <property name="margin-bottom">4</property>
 +                <property name="hexpand">True</property>
++                <property name="label">The formula is empty when rendered or invalid.</property>
++                <attributes>
++                  <attribute name="foreground" value="#e0e01b1b2424"/>
++                </attributes>
 +              </object>
 +              <packing>
 +                <property name="expand">True</property>
@@ -84,7 +122,7 @@ index 468ce6c..e9f7b13 100644
 +                <property name="can-focus">True</property>
 +                <property name="receives-default">True</property>
 +                <property name="use-alpha">False</property>
-+                <property name="tooltip-text" translatable="yes">Formula color</property>
++                <property name="tooltip-text" translatable="yes">Formula color (click and hold for the Xournal palette)</property>
 +              </object>
 +              <packing>
 +                <property name="expand">False</property>
