@@ -76,3 +76,11 @@ This patch adds 3 shortcuts to create new shapes.
 **Ctrl+K** create a cross to represent a point on a graphic. The cross will be of the color and width of the curent selected tool. If the current tool is not a drawing tool, the width will fallback to normal. 
 
 When using any of these shortcuts, the symbol will snap to the mouse cursor until you press Left click, just like when pasting after using patch #1.
+
+
+### Patch #7 : apply_arrow_resize_fix_v2.py
+When an arrow is created, its head(s) are scaled correctly but because the arrow tool basically draws the heads by tracing two lines automaticaly attatched to the main line, if an existing arrow is being asymetrically rescailed, the head will apear stretched.
+
+For this patch, it was required to add a special marker `arrow="single"` or `arrow="double"` tag in the xopp's xml code for eatch drawn arrow, to be able to differenciate lines, arrows and double arrows and then call the ArrowHandler function (respoonsible for drawing arrows heads) anew on the stroke when it is being unselected
+
+So now, rescaling an arrow will have no visible effect on its head(s)
