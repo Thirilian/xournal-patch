@@ -41,10 +41,32 @@ Important : the formula will apear below right from your cursor. This is intenti
 ### Patch #1 : apply_paste_follow_cursor.py
 This patch will make any selected object you pasted snap to the cursor until you press left click
 
+<img width="593" height="255" alt="image" src="https://github.com/user-attachments/assets/66110fda-eca4-4d66-9633-af489578814c" />
+
 ### Patch #2 : apply_txt_prefill.py
 If you select a textbox while having the Tex editor enabled, the Tex window will open, filled with the con,tent of your texttbox wrapped into "\tex{...}", wich is great in most cases but is not optimal if you wan to directly convert something you wrote in plain text with math mode in it (see example).
 
 This patch uses the "%txt" option provided by my latex compiling script (see repo above) to start the internal editor in plain text mode, allowing you to convert formulas written in a textbox with ease.
+
+**Examples :**
+
+<img width="705" height="23" alt="image" src="https://github.com/user-attachments/assets/74fb288d-e434-40cc-8abe-2a553d3f0efc" />
+
+<img width="333" height="83" alt="image" src="https://github.com/user-attachments/assets/5018d90f-a2c8-42b8-ac9e-198f02d0e9f5" />
+
+<img width="705" height="105" alt="image" src="https://github.com/user-attachments/assets/36773128-1877-4ec7-9e79-e0fb69510ad0" />
+
+________________________________________________________________________________________________________
+
+<img width="583" height="40" alt="image" src="https://github.com/user-attachments/assets/d115b3c8-07bc-46b1-8a92-f5b11e3238eb" />
+
+_selecting the textbox with the equation tool_
+
+<img width="329" height="295" alt="image" src="https://github.com/user-attachments/assets/f7bd4ace-b995-4f55-97cb-3ef1de4fd7e0" />
+
+_tadaaa_ :
+
+<img width="516" height="35" alt="image" src="https://github.com/user-attachments/assets/57c2ed1b-4937-4347-aed7-a7373fdf8c8e" />
 
 
 ### Patch #3 : apply_resize_ratio_v3.py
@@ -66,6 +88,11 @@ This patch adds a wiget allowing the user to change the %%XPP_TEXT_COLOR%% (equa
 
 This will force a compilation, so the color is updated on the formula.
 
+<img width="342" height="306" alt="image" src="https://github.com/user-attachments/assets/f11f529a-f8f7-4c9e-b5d8-4caffb2ac719" />
+<img width="328" height="306" alt="image" src="https://github.com/user-attachments/assets/6005d1aa-3eb1-47ec-8070-932c95f7934c" />
+
+<img width="506" height="332" alt="image" src="https://github.com/user-attachments/assets/6ad2da7c-b040-44b6-bb24-55822fb8aca2" />
+
 
 ### Patch #6 : apply_floating_marks_v2.py
 This patch adds 3 shortcuts to create new shapes. 
@@ -78,9 +105,38 @@ This patch adds 3 shortcuts to create new shapes.
 When using any of these shortcuts, the symbol will snap to the mouse cursor until you press Left click, just like when pasting after using patch #1.
 
 
+
+Usecase example :
+
+<img width="838" height="510" alt="image" src="https://github.com/user-attachments/assets/2c859fc3-b094-432b-9f73-e460259d7f07" />
+
+
 ### Patch #7 : apply_arrow_resize_fix_v2.py
 When an arrow is created, its head(s) are scaled correctly but because the arrow tool basically draws the heads by tracing two lines automaticaly attatched to the main line, if an existing arrow is being asymetrically rescailed, the head will apear stretched.
 
 For this patch, it was required to add a special marker `arrow="single"` or `arrow="double"` tag in the xopp's xml code for eatch drawn arrow, to be able to differenciate lines, arrows and double arrows and then call the ArrowHandler function (respoonsible for drawing arrows heads) anew on the stroke when it is being unselected
 
 So now, rescaling an arrow will have no visible effect on its head(s)
+
+**Before :**
+
+<img width="433" height="95" alt="image" src="https://github.com/user-attachments/assets/14cd75ec-b61e-40fe-b47d-469a76c7a02e" />
+
+rescaled :
+
+<img width="433" height="95" alt="image" src="https://github.com/user-attachments/assets/e02ad67f-eedd-46f6-b02d-e13b32973642" />
+
+
+**After :**
+
+<img width="433" height="95" alt="image" src="https://github.com/user-attachments/assets/14cd75ec-b61e-40fe-b47d-469a76c7a02e" />
+
+rescaled :
+
+<img width="433" height="95" alt="image" src="https://github.com/user-attachments/assets/559c9fe4-425c-4cf5-a448-8849abd2db56" />
+
+
+### Patch #8 : apply_fix_warnings.py
+Note : Because it hasn't been reviewed yet, this patch is deactivated in the standard `Installation.txt` file
+
+This patch just fixes the warnings that are currently generated while building the fresh xournalapp clone.
