@@ -15,16 +15,13 @@ curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_tx
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_resize_ratio_v3.py
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_force_recompile.py
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_color_widget.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_floating_marks_v2.py
 python3 apply_paste_follow_cursor_v3.py
 python3 apply_txt_prefill.py
 python3 apply_resize_ratio_v3.py
 python3 apply_force_recompile.py
 python3 apply_color_widget.py
-
-# Vérification rapide que tout s'est bien appliqué (chaque commande doit renvoyer 1) :
-grep -c "void beginFloatingPlacement();" src/core/gui/PageView.h # censé renvoyer 1
-grep -c "bool awaitingFloatingPlacement = false;" src/core/gui/PageView.h # censé renvoyer 1
-grep -c "isNewFormula" src/core/control/LatexController.cpp # censé renvoyer 2
+python3 apply_floating_marks_v2.py
 
 # Compiler
 mkdir build
