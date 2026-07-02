@@ -14,13 +14,13 @@ curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_pa
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_txt_prefill.py
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_resize_ratio_v3.py
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_force_recompile.py
-curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_color_widget.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_color_widget_v3.py
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_floating_marks_v2.py
 python3 apply_paste_follow_cursor_v3.py
 python3 apply_txt_prefill.py
 python3 apply_resize_ratio_v3.py
 python3 apply_force_recompile.py
-python3 apply_color_widget.py
+python3 apply_color_widget_v3.py
 python3 apply_floating_marks_v2.py
 
 # Compiler
