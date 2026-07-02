@@ -16,12 +16,15 @@ curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_re
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_force_recompile.py
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_color_widget_v3.py
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_floating_marks_v2.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_arrow_resize_fix_v2.py
+
 python3 apply_paste_follow_cursor_v3.py
 python3 apply_txt_prefill.py
 python3 apply_resize_ratio_v3.py
 python3 apply_force_recompile.py
 python3 apply_color_widget_v3.py
 python3 apply_floating_marks_v2.py
+python3 apply_arrow_resize_fix_v2.py
 
 # Compiler
 mkdir build
@@ -29,8 +32,10 @@ cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=install -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build .
 cmake --build . --target install
-
-sudo cp ~/Documents/xournalpp/build/install/bin/xournalpp /usr/bin/xournalpp
+cmake --install . --prefix /usr/local # Replace xournalapp /usr/bin/xournalpp binary with the app you built
+                                      # Can lead to unexpected behaviours. Do it at your own risks
+                                      # In case of problems, reinstall xournalapp from your system package handler
 
 # retirer les fichiers de build
+cd
 rm -rf ~/Documents/xournalpp
