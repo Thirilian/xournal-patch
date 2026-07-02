@@ -83,7 +83,7 @@ When you want to change a tex image's color, you have to change the Tex editor t
 
 This patch only implements a unique forced recompilation when you open an existing texbox for edition
 
-### Patch #5 : apply_force_recompile.py
+### Patch #5 : apply_color_widget_v3.py
 This patch adds a wiget allowing the user to change the %%XPP_TEXT_COLOR%% (equation's global color) directly while typing the equation. 
 
 This will force a compilation, so the color is updated on the formula.
