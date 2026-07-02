@@ -1,0 +1,31 @@
+diff --git a/src/core/gui/XournalView.cpp b/src/core/gui/XournalView.cpp
+index 333cf95..97206c0 100644
+--- a/src/core/gui/XournalView.cpp
++++ b/src/core/gui/XournalView.cpp
+@@ -52,9 +52,10 @@
+ 
+ using xoj::util::Rectangle;
+ 
+-constexpr int REGULAR_MOVE_AMOUNT = 3;
+-constexpr int SMALL_MOVE_AMOUNT = 1;
+-constexpr int LARGE_MOVE_AMOUNT = 10;
++constexpr double REGULAR_MOVE_AMOUNT = 3;
++constexpr double FINE_MOVE_AMOUNT = 1;      // Ctrl+Arrow
++constexpr double SMALL_MOVE_AMOUNT = 0.5;   // Alt+Arrow
++constexpr double LARGE_MOVE_AMOUNT = 10;    // Shift+Arrow
+ 
+ std::pair<size_t, size_t> XournalView::preloadPageBounds(size_t page, size_t maxPage) {
+     const size_t preloadBefore = this->control->getSettings()->getPreloadPagesBefore();
+@@ -174,9 +175,11 @@ auto XournalView::onKeyPressEvent(const KeyEvent& event) -> bool {
+             return true;
+         }
+ 
+-        int d = REGULAR_MOVE_AMOUNT;
++        double d = REGULAR_MOVE_AMOUNT;
+         if (state == GDK_MOD1_MASK) {
+             d = SMALL_MOVE_AMOUNT;
++        } else if (state == GDK_CONTROL_MASK) {
++            d = FINE_MOVE_AMOUNT;
+         } else if (state == GDK_SHIFT_MASK) {
+             d = LARGE_MOVE_AMOUNT;
+         }
