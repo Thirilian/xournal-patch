@@ -22,10 +22,11 @@ curl -O https://raw.githubusercontent.com/Thirilian/xournal-patch/main/Installat
 sudo chmod +x Installation.txt
 bash Installation.txt
 ```
+## note on the lateest build (for apt-based systems)
+the apt repository iss late compared to the github repo and so buillding the app from source got me with some new interesting features, st I wanted to mention some of them here.
 
-## Content
-### Patch #1 : apply_follow_cursor.py
-This patch will modify the behaviour of the "Add/edit Tex equation" : 
+Modification the behaviour of the "Add/edit Tex equation" : 
+
 
 Clicking the tool won't do anything anymore. You will have to click a spot of your page to open the integrated editor. When you are done, the Tex formula's image will be generated where you clicked at the begining. 
 
@@ -35,6 +36,10 @@ Important : the formula will apear below right from your cursor. This is intenti
 <img width="1179" height="95" alt="image" src="https://github.com/user-attachments/assets/3a8df604-650f-474d-ae54-fe95ff4a261c" />
 <img width="1179" height="123" alt="image" src="https://github.com/user-attachments/assets/cf887d07-683f-4b07-a069-f831d6a35246" />
 
+
+## Content
+### Patch #1 : apply_paste_follow_cursor.py
+This patch will make any selected object you pasted snap to the cursor until you press left click
 
 ### Patch #2 : apply_txt_prefill.py
 If you select a textbox while having the Tex editor enabled, the Tex window will open, filled with the con,tent of your texttbox wrapped into "\tex{...}", wich is great in most cases but is not optimal if you wan to directly convert something you wrote in plain text with math mode in it (see example).
@@ -63,4 +68,3 @@ This will force a compilation, so the color is updated on the formula.
 
 
 ### Patch #6 : apply_paste_follow_cursor.py
-pending
