@@ -67,4 +67,12 @@ This patch adds a wiget allowing the user to change the %%XPP_TEXT_COLOR%% (equa
 This will force a compilation, so the color is updated on the formula.
 
 
-### Patch #6 : apply_paste_follow_cursor.py
+### Patch #6 : apply_floating_marks_v2.py
+This patch adds 3 shortcuts to create new shapes. 
+**Ctrl+J** create a small hoizontal line for graduation of a y axis. The line will be of the color and width of the curent selected tool. If the current tool is not a drawing tool, the width will fallback to normal. 
+
+**Ctrl+Shift+J** create a small vertical line for graduation of a x axis. The line will be of the color and width of the curent selected tool. If the current tool is not a drawing tool, the width will fallback to normal. 
+
+**Ctrl+K** create a cross to represent a point on a graphic. The cross will be of the color and width of the curent selected tool. If the current tool is not a drawing tool, the width will fallback to normal. 
+
+When using any of these shortcuts, the symbol will snap to the mouse cursor until you press Left click, just like when pasting after using patch #1.
