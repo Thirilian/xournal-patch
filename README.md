@@ -140,3 +140,25 @@ rescaled :
 Note : Because it hasn't been reviewed yet, this patch is deactivated in the standard `Installation.txt` file
 
 This patch just fixes the warnings that are currently generated while building the fresh xournalapp clone.
+
+### Patch #9 :
+**__This patch is related to ergonomic changes and is not meant to pe implemented to the xournal official code.__**
+
+When selected, an object can be moved using arrow keys with the following modulations :
+**Alt+Arrow key** movement with a 1-point step
+
+**Arrow key** movement with a 3-points step
+
+**Shift+Arrow key** movement with a 10-points step
+
+
+This patch rebinds Alt+Arrow key and adds a finer movement stage. Here are the new movement controls after aplying this patch :
+
+**Alt+Arrow key** movement with a 0.5-point step
+
+**RightCtrl+Arrow key** movement with a 1-point step
+
+**Arrow key** movement with a 3-points step
+
+**Shift+Arrow key** movement with a 10-points step
+
