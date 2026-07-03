@@ -1,6 +1,7 @@
 # xournal++ patches
-for efficiency reasons, I had to do some changes to xournal++'  code to implement some ergonomy improvem ent features
-until I share this with xournal++' team, it will remain python patches.
+for efficiency reasons, I had to do some changes to xournal++'  code to implement some ergonomy improvement features.
+
+Until I share this with xournal++' team, it will remain python patches.
 
 
 ## Important :
@@ -22,7 +23,7 @@ curl -O https://raw.githubusercontent.com/Thirilian/xournal-patch/main/Installat
 sudo chmod +x Installation.txt
 bash Installation.txt
 ```
-## note on the lateest build (for apt-based systems)
+## Note on the lateest build (for apt-based systems)
 the apt repository iss late compared to the github repo and so buillding the app from source got me with some new interesting features, st I wanted to mention some of them here.
 
 Modification the behaviour of the "Add/edit Tex equation" : 
