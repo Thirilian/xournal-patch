@@ -11,7 +11,11 @@ cd xournalpp
 
 # Appliquer le patch
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v1.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v2.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v3.py
 python3 apply_alignment_snap_v1.py
+python3 apply_alignment_snap_v2.py
+python3 apply_alignment_snap_v3.py
 
 
 # Compiler
