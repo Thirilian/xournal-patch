@@ -1,0 +1,18 @@
+Idées pour patch
+Patch 8.1 :
+Les guidelines équidistantes
+
+Patch 8.2
+La ligne de guidage est scindée en deux lignes égales. La ligne qui part  de l'objet sélectionnée d'une part et la ligne qui partde /va vers l'objet cible de l'autre. Les deux lignes doivent avoir la couleur qui est adaptée :
+Si la ligne part d'un bord de l'objet sélectionné et arrive au centre d'un objet cible, la ligne côté sélectionné (première moitié) doit être rose au départ et verte à l'arrivée (deuxième moitié)
+
+Patch 8.3 :
+Ajouter un point d'ancrage pour centrer les objets en abcysse par rapport à la page actuelle. La ligne de guidage qui résulte de ce snapping doit être grise.
+Petite subtilité :
+Si le background de la page sur laquelle est l'objet sélectionné est "Tracé avec ligne verticale", le point d'ancrage pour centrer les objets par rapport à la page doit être décalé sur la droite : la calcul "coordonnée en abcysse" doit partir de la marge vers le bord de la page. Si le background est "Marge à droite", la position du point d'ancrage doit changer.
+
+Patch 8.4 :
+Si une ligne verticale est entrain d'être créée (dans mon exemple, de bas en haut), qu'elle est plus longue que 50pt et qu'elle croise une autre ligne plus longue que 50pt déjà créée qui est horizontale, le système dessine un petit segment rose horizontal de 15 pt en bas (à l'origine, au point actuellement immuable) de la ligne qui est entrain dd'être dessinée. Le système dessine aussi une ligne rose horizeontale de 15pt alignée avec la ligne hjorizontale plus bassur l'axe x. La distance entre les deux uideline roses doit être égale à la longueur de la ligne horizontale déjà tracée. Si la ligne qui est entrain d'être dessinée atteint la guideline rose du haut, la ligne verticale qui est entrain d'être dessinée est snap. Si la ligne va plus haut que le marqueur rose du haut, les deux marqueuers disparaissent. Si pendant la construction, la ligne verticale redevuient moins longue que la ligne horizontale, les deux guidelines roses réaparaissent. Cela fonctionne avec une ligne verticale dessinée de haut en bas ou avec une ligne horizontale dessinée de gauche à droite ou de droite à gauche.
+
+Patch 8.5 :
+la véritable  fonctionnalité du palier bleu : Si on est dans le cas du palier bleu (qu'on est donc entrain de déplacer une petite ligne déjà créée le long d'une grande ligne) et que la grande lingne a déjà __une__ (et pas plus d'une) petite ligne (non sélectionnée), qui l'intersecte, le système dessine des petites guideline bleues parallèles et de même taille que la petite ligne actuellement sélectionnée tout le long de la grande ligne en direction extérieure à la petite ligne sélectionnée (si la petite ligne sélectionnée est à droite de la petite ligne non sélectionnée, les guidelines seront tracées tout le long de la grande ligne vers la droite). Les guidelines doivent être équidistantes et la distance qui les sépare doit être égale à la distance qui sépare la petite ligne sélectionnée et la petite ligne non sélectionnée. ## L'idée est que ces petites guidelines bleues aparaissent si il y a deux petites lignes en intersection avec la grande ligne et que l'une des deux lignes est déplacée dans l'axe (donc sélectionnée, clique gauche enfoncé) mais que les guidelines b disparaissent si  petite ligne non ## Si la grande ligne est déjà en intersection avec au moins deux petites lignes non sélectionnées et que toutes ces lignes non sélectionnées sont équidistantes, le système tracera simplement les petites guidelines bleues en direction extérieure à la ligne actuellement sélectionnée.
