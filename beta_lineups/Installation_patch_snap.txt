@@ -10,6 +10,7 @@ git clone https://github.com/xournalpp/xournalpp
 cd xournalpp
 
 # Appliquer le patch
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_arrow_resize_fix_v2.py
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v1.py
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v2.py
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v3.py
@@ -17,6 +18,14 @@ curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lin
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v5.py
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v6.py
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v7.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v7_5.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v7_6.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v7_8.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v7_9.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v8_1.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v8_1_2.py
+
+python3 apply_arrow_resize_fix_v2.py
 python3 apply_alignment_snap_v1.py
 python3 apply_alignment_snap_v2.py
 python3 apply_alignment_snap_v3.py
@@ -24,6 +33,12 @@ python3 apply_alignment_snap_v4.py
 python3 apply_alignment_snap_v5.py
 python3 apply_alignment_snap_v6.py
 python3 apply_alignment_snap_v7.py
+python3 apply_alignment_snap_v7_5.py
+python3 apply_alignment_snap_v7_6.py
+python3 apply_alignment_snap_v7_8.py
+python3 apply_alignment_snap_v7_9.py
+python3 apply_alignment_snap_v8_1.py
+python3 apply_alignment_snap_v8_1_2.py
 
 
 # Compiler
