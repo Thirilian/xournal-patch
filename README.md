@@ -142,7 +142,7 @@ Note : Because it hasn't been reviewed yet, this patch is deactivated in the sta
 
 This patch just fixes the warnings that are currently generated while building the fresh xournalapp clone.
 
-### Patch #9 :
+### Patch #9 : apply_fine_arrow_move.py
 **__This patch is related to ergonomic changes and is not meant to pe implemented to the xournal official code.__**
 
 When selected, an object can be moved using arrow keys with the following modulations :
