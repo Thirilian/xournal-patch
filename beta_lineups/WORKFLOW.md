@@ -99,4 +99,20 @@ Adding a two-double arrow display
 
 **Todo** : Modifying : The left arrow (the one that is the furthest from the selected object, the arrow points to the wrong direction
 
-## Patch 8.2
+### Patch 8.2
+The guideline is splitted in two halfs and the color of eatch half will depend on what type of anchor point it points to (pink : a side anchor point, green : a center point.
+
+Without the patch, the guideline will havbe one color and this color will turn green if  a center is involvolved
+### Patch 8.2.2
+If two objects are further than 5pt from one another, the two halfs xwill appear in the blank space (not cover objects anymore but blank)
+
+**Todo** : if lines are not hor or vertical, the guidelines won't go to the ebd point of the line
+### Patch 8.3
+If the current page's background is "lined with left margin", a snaping point with a grey guideline will be displayed (a guideline on the margin will be displayed too)
+
+If the current page's background is "lined with right margin", a snaping point with a grey guideline will be displayed (a guideline on the margin will be displayed too).  The snaping point is podsition at the horieontal middle of the page (between the margin and the page)
+
+If the current page's background is any other than those two, the anchor will just be the middle of the page
+
+### Patch 8.4
+If a straight line is being drawn and it crosses another line perpendicularly, and the two line are biger than 50pt, a pink 15pt guideline perpendicular to the  line that is being drawn will popup to the origin and to the end 
