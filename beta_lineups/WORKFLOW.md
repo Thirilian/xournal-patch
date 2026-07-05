@@ -57,3 +57,46 @@ Adding visible guidelines to visualize the origin of a snapping between two anco
     3. Pink
 - Blue stage : A line is considered small if it is shorter than 15pt
 - Changing color for blue guidelines
+- if two objects are identical and aligned, the central line will be displayeed rather than the side one
+[Problems :]
+- Blue stage : the tip of the arrow head lines are snaping too
+### Patch 6
+- Correction of the 0.5--0.7  value because buildCoordinates() was affecting the wrong data : a textbox doesn't have a line width
+- Reworking hierarkey :
+    1. Blue
+    2. Green or Pink
+- If multiple guidelines can be diisplayed on an axis, it will do
+- Blue stage : if triggered, it will avoid other snappings
+- try to modify arrow snaping behaviour to save the day
+### Patch 7
+- Trying to  exclude lines that are drawn by an arrow head from the snaping system
+- Giving TEXT_Y_CENTER_FRACTION the right value of 0.6 to finally get the horizontal snaping for text box crossing
+- Fixing small line snapping to center of big line in blue stage (bug with blue stage direction
+### Patch 7.5
+- trying to fix arrow head detection
+### Patch 7.6
+- Finally exclueding arrow heads from the anchor points relevance using apply_arrow_resize_fix_v2
+[Problem]
+- In blue stage, the small line will still snap to the center of the big line but this time with the right color (green) (need to exclude that behaviour in blue stage)
+
+**Beyond Patch 7.6, The final patch #10 will need apply_arrow_resize_fix_v2 applied first to function**
+
+### Patch 7.8
+### Patch 7.9
+- Fixing the smazll line snaping to the middle of the big line under any circumstances
+
+**Todo : a patch gathering v1-v7.9**
+
+## Patches 8.X
+Patches 8.X should be independant from another and will implement some brand new features for snaping that can come handy in some case. They are optionnal
+### Patch 8.1
+Implement equidistant snapping : if 3 objects are on the document, and one of them is selected, a snaping point can be triggered if the selected object happends to be equidistant with the two others. Two arrows will be displayed to signify the equidistance. For the snapping to be triggered, the objects heve to share at least one vertical or horizontal line together (Figma principle)
+
+[Problem :] Missing double arrow display
+### Patch 8.1.2
+Adding a two-double arrow display
+### Patch 8.1.3
+
+**Todo** : Modifying : The left arrow (the one that is the furthest from the selected object, the arrow points to the wrong direction
+
+## Patch 8.2
