@@ -1,0 +1,332 @@
+diff --git a/src/core/control/tools/ArrowHandler.cpp b/src/core/control/tools/ArrowHandler.cpp
+index ece912b..16ceb59 100644
+--- a/src/core/control/tools/ArrowHandler.cpp
++++ b/src/core/control/tools/ArrowHandler.cpp
+@@ -19,6 +19,7 @@ ArrowHandler::~ArrowHandler() = default;
+ auto ArrowHandler::createShape(bool isAltDown, bool isShiftDown, bool isControlDown)
+         -> std::pair<std::vector<Point>, Range> {
+     Point c = snappingHandler.snap(this->currPoint, this->startPoint, isAltDown);
++    c = applyLineCrossingSnap(c);
+     const double thickness = control->getToolHandler()->getThickness();
+     const ArrowKind kind = this->doubleEnded ? ArrowKind::DOUBLE : ArrowKind::SINGLE;
+ 
+diff --git a/src/core/control/tools/BaseShapeHandler.cpp b/src/core/control/tools/BaseShapeHandler.cpp
+index 420da4b..0ec27ba 100644
+--- a/src/core/control/tools/BaseShapeHandler.cpp
++++ b/src/core/control/tools/BaseShapeHandler.cpp
+@@ -1,5 +1,6 @@
+ #include "BaseShapeHandler.h"
+ 
++#include <algorithm>  // for min, max
+ #include <cmath>   // for pow, NAN
+ #include <memory>  // for make_unique, __share...
+ 
+@@ -23,6 +24,23 @@
+ #include "view/overlays/ShapeToolView.h"           // for ShapeToolView
+ 
+ 
++/**
++ * Below this length (in document points), a segment isn't considered eligible for the "line
++ * crossing" snap assist - neither the line being drawn nor the line/arrow it might cross.
++ */
++constexpr double LINE_CROSS_MIN_LENGTH = 50.0;
++
++/// How close to perfectly horizontal/vertical (in document points, on the perpendicular coordinate)
++/// a segment must be to count as axis-aligned for the "line crossing" snap assist.
++constexpr double LINE_CROSS_AXIS_TOLERANCE = 3.0;
++
++/// Half the length, in document points, of each 15pt marker drawn by the "line crossing" snap assist.
++constexpr double LINE_CROSS_MARKER_HALF_SIZE = 7.5;
++
++/// Same tolerance (in screen pixels, converted via zoom) as the rest of the alignment-snapping
++/// system, so this feels consistent with every other kind of snap in the app.
++constexpr double LINE_CROSS_SNAP_TOLERANCE_PX = 6.0;
++
+ BaseShapeHandler::BaseShapeHandler(Control* control, const PageRef& page, bool flipShift, bool flipControl):
+         InputHandler(control, page),
+         flipShift(flipShift),
+@@ -37,6 +55,17 @@ BaseShapeHandler::~BaseShapeHandler() = default;
+ void BaseShapeHandler::updateShape(bool isAltDown, bool isShiftDown, bool isControlDown) {
+     auto [shape, rg] = this->createShape(isAltDown, isShiftDown, isControlDown);
+     std::swap(shape, this->shape);
++    // The line-crossing snap assist's markers (see applyLineCrossingSnap()) can sit outside the
++    // shape's own bounding box - most notably the "far" marker, before the line has actually reached
++    // it. Without this, the dirty-region tracking below would never invalidate their pixels,
++    // leaving stale markers on screen from a previous frame (wrong position, or shown when no
++    // longer relevant).
++    if (this->lineCrossingGuide) {
++        for (const Point& center: {this->lineCrossingGuide->nearCenter, this->lineCrossingGuide->farCenter}) {
++            rg.addPoint(center.x - LINE_CROSS_MARKER_HALF_SIZE, center.y - LINE_CROSS_MARKER_HALF_SIZE);
++            rg.addPoint(center.x + LINE_CROSS_MARKER_HALF_SIZE, center.y + LINE_CROSS_MARKER_HALF_SIZE);
++        }
++    }
+     Range repaintRange = rg.unite(lastSnappingRange);
+     lastSnappingRange = rg;
+     repaintRange.addPadding(0.5 * this->stroke->getWidth());
+@@ -45,6 +74,7 @@ void BaseShapeHandler::updateShape(bool isAltDown, bool isShiftDown, bool isCont
+ 
+ void BaseShapeHandler::cancelStroke() {
+     this->shape.clear();
++    this->lineCrossingGuide.reset();
+     Range repaintRange = this->lastSnappingRange;
+     repaintRange.addPadding(0.5 * this->stroke->getWidth());
+     this->viewPool->dispatchAndClear(xoj::view::ShapeToolView::FINALIZATION_REQUEST, repaintRange);
+@@ -81,6 +111,7 @@ auto BaseShapeHandler::onMotionNotifyEvent(const PositionInputData& pos, double
+         return true;
+     }
+     this->currPoint = newPoint;
++    this->lastZoom = zoom;
+ 
+     this->updateShape(pos.isAltDown(), pos.isShiftDown(), pos.isControlDown());
+ 
+@@ -104,6 +135,7 @@ void BaseShapeHandler::onButtonReleaseEvent(const PositionInputData& pos, double
+ 
+     stroke->setPointVector(this->shape, &lastSnappingRange);
+     stroke->setArrowKind(this->getArrowKind());
++    this->lineCrossingGuide.reset();
+ 
+     Range repaintRange = lastSnappingRange;
+     repaintRange.addPadding(0.5 * this->stroke->getWidth());
+@@ -169,6 +201,123 @@ void BaseShapeHandler::modifyModifiersByDrawDir(double width, double height, dou
+     }
+ }
+ 
++/**
++ * If `el` is a Stroke with at least 2 points, returns its two "shaft" endpoints: for a plain
++ * straight line, its only two points; for an arrow (single or double-ended - see
++ * ArrowHandler::createShape()), its first and last point specifically, which are always the true
++ * shaft start and tip regardless of however many arrowhead "wing" points lie in between. Returns
++ * nullopt for anything else (not a Stroke, or fewer than 2 points).
++ */
++static auto getLineShaftEndpoints(const Element* el) -> std::optional<std::pair<Point, Point>> {
++    const auto* stroke = dynamic_cast<const Stroke*>(el);
++    if (stroke == nullptr || stroke->getPointCount() < 2) {
++        return std::nullopt;
++    }
++    const Point* pts = stroke->getPoints();
++    return std::make_pair(pts[0], pts[stroke->getPointCount() - 1]);
++}
++
++auto BaseShapeHandler::applyLineCrossingSnap(Point rawEnd) -> Point {
++    this->lineCrossingGuide.reset();
++
++    double dx = rawEnd.x - this->startPoint.x;
++    double dy = rawEnd.y - this->startPoint.y;
++    bool drawingVertical = std::abs(dx) <= LINE_CROSS_AXIS_TOLERANCE && std::abs(dy) > LINE_CROSS_MIN_LENGTH;
++    bool drawingHorizontal = std::abs(dy) <= LINE_CROSS_AXIS_TOLERANCE && std::abs(dx) > LINE_CROSS_MIN_LENGTH;
++    if (!drawingVertical && !drawingHorizontal) {
++        return rawEnd;
++    }
++
++    Layer* layer = this->page->getSelectedLayer();
++    if (layer == nullptr) {
++        return rawEnd;
++    }
++
++    double currentLength = drawingVertical ? std::abs(dy) : std::abs(dx);
++    double tolerance = LINE_CROSS_SNAP_TOLERANCE_PX / this->lastZoom;
++
++    bool found = false;
++    double bestTargetLength = 0;
++    double bestDistFromCurrent = 0;
++
++    for (auto& elPtr: layer->getElements()) {
++        auto shaft = getLineShaftEndpoints(elPtr.get());
++        if (!shaft) {
++            continue;
++        }
++        double odx = shaft->second.x - shaft->first.x;
++        double ody = shaft->second.y - shaft->first.y;
++        double targetLength = std::hypot(odx, ody);
++        if (targetLength <= LINE_CROSS_MIN_LENGTH) {
++            continue;
++        }
++        bool targetIsVertical = std::abs(odx) <= LINE_CROSS_AXIS_TOLERANCE;
++        bool targetIsHorizontal = std::abs(ody) <= LINE_CROSS_AXIS_TOLERANCE;
++
++        if (drawingVertical) {
++            if (!targetIsHorizontal) {
++                continue;
++            }
++            double minX = std::min(shaft->first.x, shaft->second.x);
++            double maxX = std::max(shaft->first.x, shaft->second.x);
++            if (this->startPoint.x < minX || this->startPoint.x > maxX) {
++                continue;
++            }
++            // The target must actually lie in the direction being drawn (above if drawing upward,
++            // below if drawing downward) - otherwise it could never really be "crossed" by extending
++            // the current line further, no matter how far it goes.
++            double targetY = shaft->first.y;  // either endpoint works: nearly equal for a horizontal target
++            if ((dy > 0 && targetY < this->startPoint.y) || (dy < 0 && targetY > this->startPoint.y)) {
++                continue;
++            }
++            // The markers only appear once the line being drawn has ALREADY crossed the target's
++            // height, not in anticipation of reaching it - i.e. targetY must already lie between the
++            // origin and the current (raw, pre-snap) endpoint.
++            if (targetY < std::min(this->startPoint.y, rawEnd.y) || targetY > std::max(this->startPoint.y, rawEnd.y)) {
++                continue;
++            }
++        } else {
++            if (!targetIsVertical) {
++                continue;
++            }
++            double minY = std::min(shaft->first.y, shaft->second.y);
++            double maxY = std::max(shaft->first.y, shaft->second.y);
++            if (this->startPoint.y < minY || this->startPoint.y > maxY) {
++                continue;
++            }
++            double targetX = shaft->first.x;
++            if ((dx > 0 && targetX < this->startPoint.x) || (dx < 0 && targetX > this->startPoint.x)) {
++                continue;
++            }
++            if (targetX < std::min(this->startPoint.x, rawEnd.x) || targetX > std::max(this->startPoint.x, rawEnd.x)) {
++                continue;
++            }
++        }
++
++        double distFromCurrent = std::abs(currentLength - targetLength);
++        if (!found || distFromCurrent < bestDistFromCurrent) {
++            found = true;
++            bestDistFromCurrent = distFromCurrent;
++            bestTargetLength = targetLength;
++        }
++    }
++
++    if (!found || currentLength > bestTargetLength + tolerance) {
++        return rawEnd;
++    }
++
++    double sign = drawingVertical ? (dy >= 0 ? 1.0 : -1.0) : (dx >= 0 ? 1.0 : -1.0);
++    Point farCenter = drawingVertical ? Point(this->startPoint.x, this->startPoint.y + sign * bestTargetLength)
++                                       : Point(this->startPoint.x + sign * bestTargetLength, this->startPoint.y);
++    this->lineCrossingGuide = LineCrossingGuide{this->startPoint, farCenter, drawingVertical};
++
++    if (bestDistFromCurrent < tolerance) {
++        return drawingVertical ? Point(rawEnd.x, this->startPoint.y + sign * bestTargetLength)
++                                : Point(this->startPoint.x + sign * bestTargetLength, rawEnd.y);
++    }
++    return rawEnd;
++}
++
+ auto BaseShapeHandler::getShape() const -> const std::vector<Point>& { return this->shape; }
+ 
+ auto BaseShapeHandler::createView(xoj::view::Repaintable* parent) const -> std::unique_ptr<xoj::view::OverlayView> {
+diff --git a/src/core/control/tools/BaseShapeHandler.h b/src/core/control/tools/BaseShapeHandler.h
+index 4e4fbb9..962d4df 100644
+--- a/src/core/control/tools/BaseShapeHandler.h
++++ b/src/core/control/tools/BaseShapeHandler.h
+@@ -12,6 +12,7 @@
+ #pragma once
+ 
+ #include <memory>  // for shared_ptr
++#include <optional> // for optional
+ #include <utility>  // for pair
+ #include <vector>   // for vector
+ 
+@@ -71,6 +72,21 @@ public:
+      */
+     virtual ArrowKind getArrowKind() const { return ArrowKind::NONE; }
+ 
++    /**
++     * Two 15pt markers, drawn perpendicular to the line/arrow currently being drawn, illustrating a
++     * matching length found on another line/arrow already on the page - see applyLineCrossingSnap().
++     * `nearCenter` sits at the fixed origin point of the line being drawn; `farCenter` sits at the
++     * target distance away, in the direction being drawn. `perpendicularIsHorizontal` is true when
++     * the line being drawn is vertical (so the markers themselves are drawn as short horizontal
++     * segments), false when it is horizontal (markers drawn as short vertical segments).
++     */
++    struct LineCrossingGuide {
++        Point nearCenter;
++        Point farCenter;
++        bool perpendicularIsHorizontal;
++    };
++    const std::optional<LineCrossingGuide>& getLineCrossingGuide() const { return lineCrossingGuide; }
++
+ private:
+     /**
+      * @brief Create the shape (to be drawn and added as a stroke), depending on the last event in
+@@ -99,6 +115,21 @@ protected:
+      */
+     void modifyModifiersByDrawDir(double width, double height, double zoom, bool changeCursor = true);
+ 
++    /**
++     * If the segment from `this->startPoint` to `rawEnd` is axis-aligned (horizontal or vertical,
++     * within a small tolerance) and longer than 50pt, and another sufficiently long, perpendicular
++     * line/arrow already on the page crosses its path, updates `lineCrossingGuide` with two 15pt
++     * markers illustrating that other line's length, and returns `rawEnd` snapped to match that exact
++     * length if it is already close enough (same tolerance as the rest of the alignment-snapping
++     * system). Otherwise clears `lineCrossingGuide` and returns `rawEnd` unchanged. Meant to be called
++     * by a line-like shape's own createShape() (RulerHandler, ArrowHandler) right after computing its
++     * own raw endpoint - not used by shapes like Rectangle or Ellipse. A Stroke with an ArrowKind
++     * (single or double) is treated purely by its own shaft (first/last point), ignoring any
++     * arrowhead "wing" points, on both ends of the comparison - a fresh arrow being drawn, and an
++     * existing arrow being crossed.
++     */
++    Point applyLineCrossingSnap(Point rawEnd);
++
+ protected:
+     std::vector<Point> shape;
+ 
+@@ -120,5 +151,11 @@ protected:
+     Point buttonDownPoint;  // used for tapSelect and filtering - never snapped to grid.
+     Point startPoint;       // May be snapped to grid
+ 
++    /// Last zoom level seen in onMotionNotifyEvent() - createShape() has no zoom parameter of its
++    /// own, but applyLineCrossingSnap() needs one to convert its pixel-based tolerance.
++    double lastZoom = 1.0;
++
++    std::optional<LineCrossingGuide> lineCrossingGuide;
++
+     std::shared_ptr<xoj::util::DispatchPool<xoj::view::ShapeToolView>> viewPool;
+ };
+diff --git a/src/core/control/tools/RulerHandler.cpp b/src/core/control/tools/RulerHandler.cpp
+index 56a7599..87b45fd 100644
+--- a/src/core/control/tools/RulerHandler.cpp
++++ b/src/core/control/tools/RulerHandler.cpp
+@@ -13,6 +13,7 @@ RulerHandler::~RulerHandler() = default;
+ auto RulerHandler::createShape(bool isAltDown, bool isShiftDown, bool isControlDown)
+         -> std::pair<std::vector<Point>, Range> {
+     Point secondPoint = snappingHandler.snap(this->currPoint, this->startPoint, isAltDown);
++    secondPoint = applyLineCrossingSnap(secondPoint);
+     Range rg(this->startPoint.x, this->startPoint.y);
+     rg.addPoint(secondPoint.x, secondPoint.y);
+     return {{this->startPoint, secondPoint}, rg};
+diff --git a/src/core/view/overlays/ShapeToolView.cpp b/src/core/view/overlays/ShapeToolView.cpp
+index fadd809..5a7ab44 100644
+--- a/src/core/view/overlays/ShapeToolView.cpp
++++ b/src/core/view/overlays/ShapeToolView.cpp
+@@ -3,6 +3,7 @@
+ #include <vector>
+ 
+ #include "control/tools/BaseShapeHandler.h"
++#include "model/Point.h"
+ #include "util/raii/CairoWrappers.h"
+ #include "view/Repaintable.h"
+ #include "view/StrokeViewHelper.h"
+@@ -31,6 +32,26 @@ void ShapeToolView::draw(cairo_t* cr) const {
+     StrokeViewHelper::pathToCairo(effCr, pts);
+ 
+     this->commitDrawing(cr);
++
++    // "Line crossing" snap assist (see BaseShapeHandler::applyLineCrossingSnap()): two short pink
++    // markers, perpendicular to the line/arrow being drawn, illustrating a matching length found on
++    // another line/arrow already on the page. Drawn in document-space coordinates, same as `pts`
++    // above - no manual zoom scaling needed here.
++    if (auto guide = this->toolHandler->getLineCrossingGuide()) {
++        constexpr double MARKER_HALF_SIZE = 7.5;  // 15pt marker, centered on the guide point
++        cairo_set_source_rgb(cr, 1.0, 0.0, 0.8);  // bright pink, matching the alignment-snapping system
++        cairo_set_line_width(cr, 1.0);
++        for (const Point& center: {guide->nearCenter, guide->farCenter}) {
++            if (guide->perpendicularIsHorizontal) {
++                cairo_move_to(cr, center.x - MARKER_HALF_SIZE, center.y);
++                cairo_line_to(cr, center.x + MARKER_HALF_SIZE, center.y);
++            } else {
++                cairo_move_to(cr, center.x, center.y - MARKER_HALF_SIZE);
++                cairo_line_to(cr, center.x, center.y + MARKER_HALF_SIZE);
++            }
++            cairo_stroke(cr);
++        }
++    }
+ }
+ 
+ bool ShapeToolView::isViewOf(const OverlayBase* overlay) const { return overlay == this->toolHandler; }

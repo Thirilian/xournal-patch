@@ -1,0 +1,133 @@
+diff --git a/src/core/control/tools/BaseShapeHandler.cpp b/src/core/control/tools/BaseShapeHandler.cpp
+index 0ec27ba..467af6c 100644
+--- a/src/core/control/tools/BaseShapeHandler.cpp
++++ b/src/core/control/tools/BaseShapeHandler.cpp
+@@ -66,6 +66,14 @@ void BaseShapeHandler::updateShape(bool isAltDown, bool isShiftDown, bool isCont
+             rg.addPoint(center.x + LINE_CROSS_MARKER_HALF_SIZE, center.y + LINE_CROSS_MARKER_HALF_SIZE);
+         }
+     }
++    if (this->diagonalSnapGuide) {
++        // The two green lines run along the square's own edges, already covered by the shape's own
++        // bounding box in the vast majority of cases - but unite them in anyway for safety (e.g. an
++        // ellipse's Range is computed from its own points, which is a good approximation of the
++        // bounding box but not necessarily pixel-exact at the corners).
++        rg.addPoint(this->diagonalSnapGuide->corner1.x, this->diagonalSnapGuide->corner1.y);
++        rg.addPoint(this->diagonalSnapGuide->corner2.x, this->diagonalSnapGuide->corner2.y);
++    }
+     Range repaintRange = rg.unite(lastSnappingRange);
+     lastSnappingRange = rg;
+     repaintRange.addPadding(0.5 * this->stroke->getWidth());
+@@ -75,6 +83,7 @@ void BaseShapeHandler::updateShape(bool isAltDown, bool isShiftDown, bool isCont
+ void BaseShapeHandler::cancelStroke() {
+     this->shape.clear();
+     this->lineCrossingGuide.reset();
++    this->diagonalSnapGuide.reset();
+     Range repaintRange = this->lastSnappingRange;
+     repaintRange.addPadding(0.5 * this->stroke->getWidth());
+     this->viewPool->dispatchAndClear(xoj::view::ShapeToolView::FINALIZATION_REQUEST, repaintRange);
+@@ -136,6 +145,7 @@ void BaseShapeHandler::onButtonReleaseEvent(const PositionInputData& pos, double
+     stroke->setPointVector(this->shape, &lastSnappingRange);
+     stroke->setArrowKind(this->getArrowKind());
+     this->lineCrossingGuide.reset();
++    this->diagonalSnapGuide.reset();
+ 
+     Range repaintRange = lastSnappingRange;
+     repaintRange.addPadding(0.5 * this->stroke->getWidth());
+diff --git a/src/core/control/tools/BaseShapeHandler.h b/src/core/control/tools/BaseShapeHandler.h
+index 962d4df..690c31f 100644
+--- a/src/core/control/tools/BaseShapeHandler.h
++++ b/src/core/control/tools/BaseShapeHandler.h
+@@ -65,6 +65,13 @@ public:
+      */
+     const std::vector<Point>& getShape() const;
+ 
++    /**
++     * Last zoom level seen in onMotionNotifyEvent(), exposed so views (e.g. ShapeToolView) can draw
++     * overlay guides at a constant on-screen thickness, matching EditSelection's alignment guides,
++     * regardless of the actual zoom level - see lastZoom's own doc comment below for why it exists.
++     */
++    double getLastZoom() const { return lastZoom; }
++
+     /**
+      * @brief Whether this shape tool produces an arrow (and if so, single- or double-ended), so that
+      * the finalized Stroke can be tagged accordingly (see Stroke::setArrowKind()). NONE by default;
+@@ -87,6 +94,18 @@ public:
+     };
+     const std::optional<LineCrossingGuide>& getLineCrossingGuide() const { return lineCrossingGuide; }
+ 
++    /**
++     * Two green guide lines shown when a shape's bounding box has been snapped to a square (equal
++     * width and height) - see EllipseHandler::createShape(). `corner1` and `corner2` are the two
++     * opposite corners of the (now square) bounding box; the two lines are drawn along the edges
++     * meeting at `corner2` (the one nearer the cursor), from `corner2` to each adjacent corner.
++     */
++    struct DiagonalSnapGuide {
++        Point corner1;
++        Point corner2;
++    };
++    const std::optional<DiagonalSnapGuide>& getDiagonalSnapGuide() const { return diagonalSnapGuide; }
++
+ private:
+     /**
+      * @brief Create the shape (to be drawn and added as a stroke), depending on the last event in
+@@ -156,6 +175,7 @@ protected:
+     double lastZoom = 1.0;
+ 
+     std::optional<LineCrossingGuide> lineCrossingGuide;
++    std::optional<DiagonalSnapGuide> diagonalSnapGuide;
+ 
+     std::shared_ptr<xoj::util::DispatchPool<xoj::view::ShapeToolView>> viewPool;
+ };
+diff --git a/src/core/control/tools/EllipseHandler.cpp b/src/core/control/tools/EllipseHandler.cpp
+index 035f101..0080357 100644
+--- a/src/core/control/tools/EllipseHandler.cpp
++++ b/src/core/control/tools/EllipseHandler.cpp
+@@ -40,6 +40,22 @@ auto EllipseHandler::createShape(bool isAltDown, bool isShiftDown, bool isContro
+         width = (this->modControl) ? std::hypot(width, height) :
+                                      std::copysign(std::max(std::abs(width), std::abs(height)), width);
+         height = std::copysign(width, height);
++    } else {
++        // Diagonal snap assist: if width and height are already close, snap them to be exactly
++        // equal (a perfect circle's bounding box becomes a square), and show two green guide lines
++        // along the edges nearest the cursor. The cursor can keep moving freely along the diagonal
++        // while snapped, since both dimensions grow/shrink together; if they drift too far apart
++        // again, the snap (and the guide) releases.
++        this->diagonalSnapGuide.reset();
++        constexpr double DIAGONAL_SNAP_TOLERANCE_PX = 6.0;
++        double tolerance = DIAGONAL_SNAP_TOLERANCE_PX / this->lastZoom;
++        if (std::abs(std::abs(width) - std::abs(height)) < tolerance) {
++            double snappedSize = std::max(std::abs(width), std::abs(height));
++            width = std::copysign(snappedSize, width);
++            height = std::copysign(snappedSize, height);
++            this->diagonalSnapGuide =
++                    DiagonalSnapGuide{this->startPoint, Point(this->startPoint.x + width, this->startPoint.y + height)};
++        }
+     }
+ 
+     double radiusX = 0;
+diff --git a/src/core/view/overlays/ShapeToolView.cpp b/src/core/view/overlays/ShapeToolView.cpp
+index 5a7ab44..c1d8db7 100644
+--- a/src/core/view/overlays/ShapeToolView.cpp
++++ b/src/core/view/overlays/ShapeToolView.cpp
+@@ -52,6 +52,21 @@ void ShapeToolView::draw(cairo_t* cr) const {
+             cairo_stroke(cr);
+         }
+     }
++
++    // Diagonal (equal width/height) snap assist for ellipses (see EllipseHandler::createShape()):
++    // two green lines along the two edges of the (now square) bounding box that meet at the corner
++    // nearest the cursor.
++    if (auto guide = this->toolHandler->getDiagonalSnapGuide()) {
++        cairo_set_source_rgb(cr, 0.0, 0.8, 0.2);  // green, matching the alignment-snapping system
++        // Drawn in document-space coordinates (like everything else here), so the line width must be
++        // divided by zoom to render at a constant 1.5 screen pixels - matching the thickness of
++        // EditSelection's own alignment guides, which are drawn in already-zoomed pixel coordinates.
++        cairo_set_line_width(cr, 1.5 / this->toolHandler->getLastZoom());
++        cairo_move_to(cr, guide->corner2.x, guide->corner1.y);
++        cairo_line_to(cr, guide->corner2.x, guide->corner2.y);
++        cairo_line_to(cr, guide->corner1.x, guide->corner2.y);
++        cairo_stroke(cr);
++    }
+ }
+ 
+ bool ShapeToolView::isViewOf(const OverlayBase* overlay) const { return overlay == this->toolHandler; }
