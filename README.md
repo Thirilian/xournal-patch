@@ -163,8 +163,32 @@ This patch rebinds Alt+Arrow key and adds a finer movement stage. Here are the n
 
 **Shift+Arrow key** movement with a 10-points step
 
+### Patch #10 : 
+This patch adds the option in the edition menu to enable.disable object snaping, wich will allow for moving objects with alignment guides.
 
+This patch also adds a pannel to the preferences window to enable which sub function of this patch will be enabled for you.
+
+**All different functionnalities of this feature :**
+- basic snaping concept :
+
+Every existing object has 9 "snaping points". When two snaping points are aligned on the X or Y axis, the mobing object will be snaped and a two sided guideline will apear to indicate you of such. 
+
+A guideline reaching th esnaping point at the extremity of an object will apear in magenta. 
+
+A guideline reaching the snaping point at the X or Y center of an object will apear in green.
+
+If a small line (shorter than 15pt by default) crosses a long perpendicular line, a blue guideline will apear. This is the start of a "graduation assist" functionnality
+
+- 
 ### Patch #11 : apply_force_line_style_update_v2.py
 So far, if you select a line style from the pen tool to update the line type of a selected object, and the line style you clicked is already selected by the tool, the line style of the object isn't updated. You have to select a different line style for the tool and reselect the style you wanted for the object to update.
 
 this patch fixes that.
+### Patch #12 : apply_table_writing_assist.py
+when creating a textbox in a table's square, it spawns centered in that square.
+
+If the textbox overflows boundaries, the text's size will lower until reaching 6pt.
+
+(to come) using the arrow keys you can navigate the squares in a table wich will either create a centered textbox or open the textbox which is already in a nearby square.
+
+Using Ctrl+ Arrow key, you can navigate between textboxes even faster
