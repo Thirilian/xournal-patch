@@ -20,6 +20,9 @@ curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_ar
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/Unused/apply_fix_warnings.py
 curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/Unused/apply_fine_arrow_move.py
 
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/Unused/apply_force_line_style_update_v2.py
+
+
 python3 apply_paste_follow_cursor_v3.py
 python3 apply_txt_prefill.py
 python3 apply_resize_ratio_v3.py
@@ -29,6 +32,8 @@ python3 apply_floating_marks_v2.py
 python3 apply_arrow_resize_fix_v2.py
 # python3 apply_fix_warnings.py # changes the code to avoid warnings on building. Can be uncommented
 python3 apply_fine_arrow_move.py
+
+python3 apply_force_line_style_update_v2.py
 
 # Compiler
 mkdir build
