@@ -13,6 +13,21 @@ cp ~/Téléchargements/apply_alignment_snap_v11_1.py .
 python3 apply_alignment_snap_v11_1.py
 cp ~/Téléchargements/apply_alignment_snap_v11_2.py .
 python3 apply_alignment_snap_v11_2.py
+cp ~/Téléchargements/apply_alignment_snap_v11_2_2.py .
+python3 apply_alignment_snap_v11_2_2.py
+cp ~/Téléchargements/apply_alignment_snap_v11_3.py .
+python3 apply_alignment_snap_v11_3.py
+#cp ~/Téléchargements/apply_alignment_snap_v11_4.py .
+#python3 apply_alignment_snap_v11_4.py
+#cp ~/Téléchargements/apply_alignment_snap_v11_4_2.py .
+#python3 apply_alignment_snap_v11_4_2.py
+cp ~/Téléchargements/apply_alignment_snap_v11_5.py .
+python3 apply_alignment_snap_v11_5.py
+cp ~/Téléchargements/apply_alignment_snap_v11_5_2.py .
+python3 apply_alignment_snap_v11_5_2.py
+cp ~/Téléchargements/apply_alignment_snap_v11_5_3.py .
+python3 apply_alignment_snap_v11_5_3.py
+
 
 # Compiler
 mkdir build
