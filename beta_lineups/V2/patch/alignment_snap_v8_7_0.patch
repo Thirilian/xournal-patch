@@ -1,0 +1,239 @@
+diff --git a/src/core/control/tools/EditSelection.h b/src/core/control/tools/EditSelection.h
+index cc52895..b800563 100644
+--- a/src/core/control/tools/EditSelection.h
++++ b/src/core/control/tools/EditSelection.h
+@@ -443,6 +443,7 @@ private:  // DATA
+         double to;
+         bool isCenter;
+         bool isBoosted;
++        bool isTableCenter = false;
+     };
+ 
+     /// Vertical guide lines (constant x), set during mouseMove() while dragging, if any. Usually a
+diff --git a/src/core/control/tools/EditSelection.cpp b/src/core/control/tools/EditSelection.cpp
+index 616299e..5369049 100644
+--- a/src/core/control/tools/EditSelection.cpp
++++ b/src/core/control/tools/EditSelection.cpp
+@@ -27,7 +27,9 @@
+ #include "model/LineStyle.h"                      // for LineStyle
+ #include "model/Point.h"                          // for Point
+ #include "model/Stroke.h"                         // for Stroke
++#include "model/Image.h"                          // for Image
+ #include "model/Text.h"                           // for Text
++#include "model/TexImage.h"                       // for TexImage
+ #include "model/XojPage.h"                        // for XojPage
+ #include "undo/ArrangeUndoAction.h"               // for ArrangeUndoAction
+ #include "undo/InsertUndoAction.h"                // for InsertsUndoAction
+@@ -583,6 +585,9 @@ struct AlignmentMatch {
+     double extentTo;
+     bool isCenter;
+     bool isBoosted;
++    /// For the "table center" feature (see findTableCenterX/Y()): true when a Text/TexImage/Image is
++    /// centered between two same-length parallel lines, drawn in yellow with top priority on its axis.
++    bool isTableCenter = false;
+ };
+ 
+ /// Result of a full search on one axis: the offset that was chosen, plus every guide line
+@@ -713,6 +718,114 @@ static auto isSmallCrossingBigPerpendicular(double selfWidth, double selfHeight,
+  * xLeft/xRight are the moving box's horizontal extent, used both for the crossing/overlap check and
+  * to compute each guide line's span (perpendicular axis).
+  */
++/**
++ * If the moving text box, placed at x (width wide) with Y-extent [yTop, yBottom], has two vertical
++ * lines/arrows of the same length on `layer` whose own Y-extent fully contains [yTop, yBottom] (i.e.
++ * they bound a table column, extending past the textbox on both ends), returns a match centering the
++ * textbox horizontally between them. The guide is drawn in yellow, parallel to the two lines (i.e.
++ * vertical), spanning the shared (overlapping) length of the two lines. Only ever called when the
++ * moving selection is a single Text, TexImage, or Image.
++ */
++static auto findTableCenterX(double x, double width, double yTop, double yBottom, double tolerance, Layer* layer,
++                              const std::vector<const Element*>& excluded) -> std::optional<AlignmentMatch> {
++    std::vector<xoj::util::Rectangle<double>> verticalLines;
++    for (auto& elPtr: layer->getElements()) {
++        const Element* el = elPtr.get();
++        if (std::find(excluded.begin(), excluded.end(), el) != excluded.end()) {
++            continue;
++        }
++        xoj::util::Rectangle<double> shaft = el->getSnappedBounds();
++        bool isVerticalLine = shaft.width <= THIN_AXIS_THRESHOLD && shaft.height > THIN_AXIS_THRESHOLD;
++        if (!isVerticalLine) {
++            continue;
++        }
++        if (shaft.y > yTop || shaft.y + shaft.height < yBottom) {
++            continue;  // must extend past the textbox on both ends
++        }
++        verticalLines.push_back(shaft);
++    }
++
++    std::optional<AlignmentMatch> best;
++    double bestDist = tolerance;
++    double selfCenter = x + width / 2;
++    for (size_t i = 0; i < verticalLines.size(); ++i) {
++        for (size_t j = 0; j < verticalLines.size(); ++j) {
++            if (i == j) {
++                continue;
++            }
++            const auto& left = verticalLines[i];
++            const auto& right = verticalLines[j];
++            if (!(left.x < right.x)) {
++                continue;  // only consider "left" strictly left of "right" (each pair handled once)
++            }
++            if (std::abs(left.height - right.height) > tolerance) {
++                continue;  // same length, within the usual tolerance
++            }
++            double midpoint = (left.x + right.x) / 2;
++            double dist = std::abs(selfCenter - midpoint);
++            if (dist < bestDist) {
++                bestDist = dist;
++                double spanFrom = std::max(left.y, right.y);
++                double spanTo = std::min(left.y + left.height, right.y + right.height);
++                best = AlignmentMatch{midpoint - selfCenter, midpoint, spanFrom, spanTo, true, false};
++                best->isTableCenter = true;
++            }
++        }
++    }
++    return best;
++}
++
++/// Same as findTableCenterX(), but for two horizontal lines bounding a table row, centering the
++/// textbox vertically between them.
++static auto findTableCenterY(double y, double height, double xLeft, double xRight, double tolerance, Layer* layer,
++                              const std::vector<const Element*>& excluded) -> std::optional<AlignmentMatch> {
++    std::vector<xoj::util::Rectangle<double>> horizontalLines;
++    for (auto& elPtr: layer->getElements()) {
++        const Element* el = elPtr.get();
++        if (std::find(excluded.begin(), excluded.end(), el) != excluded.end()) {
++            continue;
++        }
++        xoj::util::Rectangle<double> shaft = el->getSnappedBounds();
++        bool isHorizontalLine = shaft.height <= THIN_AXIS_THRESHOLD && shaft.width > THIN_AXIS_THRESHOLD;
++        if (!isHorizontalLine) {
++            continue;
++        }
++        if (shaft.x > xLeft || shaft.x + shaft.width < xRight) {
++            continue;
++        }
++        horizontalLines.push_back(shaft);
++    }
++
++    std::optional<AlignmentMatch> best;
++    double bestDist = tolerance;
++    double selfCenter = y + height / 2;
++    for (size_t i = 0; i < horizontalLines.size(); ++i) {
++        for (size_t j = 0; j < horizontalLines.size(); ++j) {
++            if (i == j) {
++                continue;
++            }
++            const auto& top = horizontalLines[i];
++            const auto& bottom = horizontalLines[j];
++            if (!(top.y < bottom.y)) {
++                continue;
++            }
++            if (std::abs(top.width - bottom.width) > tolerance) {
++                continue;
++            }
++            double midpoint = (top.y + bottom.y) / 2;
++            double dist = std::abs(selfCenter - midpoint);
++            if (dist < bestDist) {
++                bestDist = dist;
++                double spanFrom = std::max(top.x, bottom.x);
++                double spanTo = std::min(top.x + top.width, bottom.x + bottom.width);
++                best = AlignmentMatch{midpoint - selfCenter, midpoint, spanFrom, spanTo, true, false};
++                best->isTableCenter = true;
++            }
++        }
++    }
++    return best;
++}
++
+ static auto findAlignmentY(double y, double height, double xLeft, double xRight, double tolerance, Layer* layer,
+                             const std::vector<const Element*>& excluded,
+                             const xoj::util::Rectangle<double>& visibleRect) -> std::optional<AlignmentSearchResult> {
+@@ -992,13 +1105,40 @@ void EditSelection::mouseMove(double mouseX, double mouseY, bool alt) {
+                 auto matchY = findAlignmentY(candidateY, height, candidateX, candidateX + width, tolerance,
+                                               this->sourceLayer, excluded, visibleRect);
+ 
++                // "Table center" (see findTableCenterX/Y()): only relevant when the moving selection is
++                // a single Text, TexImage, or Image. Takes strict priority over whatever pink/green
++                // match (ordinary tier, equidistant) already exists on its own axis - if found, it
++                // fully replaces it, rather than competing on closeness like equidistant does. Never
++                // overrides a boosted (blue) match; does not affect the other axis at all.
++                auto selfElements = this->getElementsView();
++                bool selfIsTableTarget = selfElements.size() == 1 &&
++                                          (dynamic_cast<const Text*>(*selfElements.begin()) != nullptr ||
++                                           dynamic_cast<const TexImage*>(*selfElements.begin()) != nullptr ||
++                                           dynamic_cast<const Image*>(*selfElements.begin()) != nullptr);
++                if (selfIsTableTarget) {
++                    bool matchXIsBoostedForTable = matchX && !matchX->guides.empty() && matchX->guides.front().isBoosted;
++                    bool matchYIsBoostedForTable = matchY && !matchY->guides.empty() && matchY->guides.front().isBoosted;
++                    if (!matchXIsBoostedForTable) {
++                        if (auto tableX = findTableCenterX(candidateX, width, candidateY, candidateY + height,
++                                                            tolerance, this->sourceLayer, excluded)) {
++                            matchX = AlignmentSearchResult{tableX->offset, {*tableX}};
++                        }
++                    }
++                    if (!matchYIsBoostedForTable) {
++                        if (auto tableY = findTableCenterY(candidateY, height, candidateX, candidateX + width,
++                                                            tolerance, this->sourceLayer, excluded)) {
++                            matchY = AlignmentSearchResult{tableY->offset, {*tableY}};
++                        }
++                    }
++                }
++
+                 if (matchX) {
+                     dx += matchX->offset;
+                     objectSnappedX = true;
+                     this->activeGuidesX.clear();
+                     for (auto& g: matchX->guides) {
+                         this->activeGuidesX.push_back(
+-                                AlignmentGuide{g.coordinate, g.extentFrom, g.extentTo, g.isCenter, g.isBoosted});
++                                AlignmentGuide{g.coordinate, g.extentFrom, g.extentTo, g.isCenter, g.isBoosted, g.isTableCenter});
+                     }
+                 } else {
+                     this->activeGuidesX.clear();
+@@ -1009,7 +1149,7 @@ void EditSelection::mouseMove(double mouseX, double mouseY, bool alt) {
+                     this->activeGuidesY.clear();
+                     for (auto& g: matchY->guides) {
+                         this->activeGuidesY.push_back(
+-                                AlignmentGuide{g.coordinate, g.extentFrom, g.extentTo, g.isCenter, g.isBoosted});
++                                AlignmentGuide{g.coordinate, g.extentFrom, g.extentTo, g.isCenter, g.isBoosted, g.isTableCenter});
+                     }
+                 } else {
+                     this->activeGuidesY.clear();
+@@ -1587,6 +1727,36 @@ void EditSelection::paint(cairo_t* cr, double zoom) {
+         cairo_restore(cr);
+     }
+ 
++    // "Table center" guides (see findTableCenterX/Y()) always render on top in yellow, regardless of
++    // how the main guide loop above colored them (they also satisfy isCenter, so that loop draws them
++    // too - this separate pass paints over in yellow, giving them priority on their axis without
++    // needing to touch that loop's own, more intricate color-selection logic).
++    if (!this->activeGuidesX.empty() || !this->activeGuidesY.empty()) {
++        cairo_save(cr);
++        cairo_set_line_width(cr, 1.5);
++        cairo_set_dash(cr, nullptr, 0, 0);
++        cairo_set_source_rgb(cr, 0.9, 0.75, 0.0);  // gold/yellow
++        for (auto& guide: this->activeGuidesX) {
++            if (!guide.isTableCenter) {
++                continue;
++            }
++            double gx = guide.coordinate * zoom;
++            cairo_move_to(cr, gx, guide.from * zoom);
++            cairo_line_to(cr, gx, guide.to * zoom);
++            cairo_stroke(cr);
++        }
++        for (auto& guide: this->activeGuidesY) {
++            if (!guide.isTableCenter) {
++                continue;
++            }
++            double gy = guide.coordinate * zoom;
++            cairo_move_to(cr, guide.from * zoom, gy);
++            cairo_line_to(cr, guide.to * zoom, gy);
++            cairo_stroke(cr);
++        }
++        cairo_restore(cr);
++    }
++
+     GdkRGBA selectionColor = view->getSelectionColor();
+ 
+     // set the line always the same size on display

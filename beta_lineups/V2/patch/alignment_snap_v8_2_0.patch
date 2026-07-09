@@ -1,0 +1,253 @@
+diff --git a/src/core/control/tools/EditSelection.cpp b/src/core/control/tools/EditSelection.cpp
+index 61db955..b4a129f 100644
+--- a/src/core/control/tools/EditSelection.cpp
++++ b/src/core/control/tools/EditSelection.cpp
+@@ -589,6 +589,9 @@ struct AlignmentMatch {
+     double extentTo;
+     bool isCenter;
+     bool isBoosted;
++    bool selfIsCenter = false;
++    bool otherIsCenter = false;
++    bool selfOnFromSide = true;
+     std::vector<std::pair<double, double>> equidistantGaps;
+     double equidistantPlacement = 0;
+ };
+@@ -875,6 +878,39 @@ static auto findEquidistantY(double y, double height, double xLeft, double xRigh
+  * xLeft/xRight are the moving box's horizontal extent, used both for the crossing/overlap check and
+  * to compute each guide line's span (perpendicular axis).
+  */
++/**
++ * Below this gap (in document points) between the moving object's own extent and the matched
++ * element's own extent (on the perpendicular axis), the guide line still spans their full union, as
++ * before - the objects are close enough (or overlapping) that trimming wouldn't help. Above it, the
++ * line is trimmed to just the empty gap between their two nearest edges, so it no longer runs on top
++ * of either object's body (most noticeable when aligning two objects that are long on the
++ * perpendicular axis, e.g. two perpendicular lines).
++ */
++constexpr double GUIDE_TRIM_MIN_GAP = 5.0;
++
++/**
++ * Computes the [from, to] span (perpendicular axis) for a guide line connecting an object spanning
++ * [selfLo, selfHi] to another spanning [otherLo, otherHi]. If the two don't overlap and the gap
++ * between their nearest edges exceeds GUIDE_TRIM_MIN_GAP, the line is trimmed to exactly that gap
++ * (the empty space between them). Otherwise (overlapping, or too close to bother trimming), the
++ * line spans their full union, as it always did before this trimming was added.
++ */
++static void computeGuideExtent(double selfLo, double selfHi, double otherLo, double otherHi, double& outFrom,
++                                double& outTo) {
++    if (selfHi <= otherLo && otherLo - selfHi > GUIDE_TRIM_MIN_GAP) {
++        outFrom = selfHi;
++        outTo = otherLo;
++        return;
++    }
++    if (otherHi <= selfLo && selfLo - otherHi > GUIDE_TRIM_MIN_GAP) {
++        outFrom = otherHi;
++        outTo = selfLo;
++        return;
++    }
++    outFrom = std::min(selfLo, otherLo);
++    outTo = std::max(selfHi, otherHi);
++}
++
+ static auto findAlignmentY(double y, double height, double xLeft, double xRight, double tolerance, Layer* layer,
+                             const std::vector<const Element*>& excluded,
+                             const xoj::util::Rectangle<double>& visibleRect) -> std::optional<AlignmentSearchResult> {
+@@ -948,12 +984,18 @@ static auto findAlignmentY(double y, double height, double xLeft, double xRight,
+                 double dist = std::abs(cs.value - co.value);
+                 if (dist < bestAnyDist) {
+                     bestAnyDist = dist;
++                    double guideFrom;
++                    double guideTo;
++                    computeGuideExtent(xLeft, xRight, snapped.x, snapped.x + snapped.width, guideFrom, guideTo);
+                     bestAny = AlignmentMatch{co.value - cs.value,
+                                               co.value,
+-                                              std::min(xLeft, snapped.x),
+-                                              std::max(xRight, snapped.x + snapped.width),
++                                              guideFrom,
++                                              guideTo,
+                                               cs.isCenter || co.isCenter,
+                                               false};
++                    bestAny->selfIsCenter = cs.isCenter;
++                    bestAny->otherIsCenter = co.isCenter;
++                    bestAny->selfOnFromSide = xLeft <= snapped.x;
+                 }
+             }
+         }
+@@ -988,9 +1030,14 @@ static auto findAlignmentY(double y, double height, double xLeft, double xRight,
+         for (auto& cs: candidatesSelf) {
+             for (auto& co: candidatesOther) {
+                 if (std::abs((cs.value + offset) - co.value) < tolerance) {
+-                    guides.push_back(AlignmentMatch{offset, co.value, std::min(xLeft, snapped.x),
+-                                                     std::max(xRight, snapped.x + snapped.width),
+-                                                     cs.isCenter || co.isCenter, false});
++                    double guideFrom;
++                    double guideTo;
++                    computeGuideExtent(xLeft, xRight, snapped.x, snapped.x + snapped.width, guideFrom, guideTo);
++                    AlignmentMatch guide{offset, co.value, guideFrom, guideTo, cs.isCenter || co.isCenter, false};
++                    guide.selfIsCenter = cs.isCenter;
++                    guide.otherIsCenter = co.isCenter;
++                    guide.selfOnFromSide = xLeft <= snapped.x;
++                    guides.push_back(guide);
+                 }
+             }
+         }
+@@ -1073,12 +1120,18 @@ static auto findAlignmentX(double x, double width, double yTop, double yBottom,
+                 double dist = std::abs(cs.value - co.value);
+                 if (dist < bestAnyDist) {
+                     bestAnyDist = dist;
++                    double guideFrom;
++                    double guideTo;
++                    computeGuideExtent(yTop, yBottom, snapped.y, snapped.y + snapped.height, guideFrom, guideTo);
+                     bestAny = AlignmentMatch{co.value - cs.value,
+                                               co.value,
+-                                              std::min(yTop, snapped.y),
+-                                              std::max(yBottom, snapped.y + snapped.height),
++                                              guideFrom,
++                                              guideTo,
+                                               cs.isCenter || co.isCenter,
+                                               false};
++                    bestAny->selfIsCenter = cs.isCenter;
++                    bestAny->otherIsCenter = co.isCenter;
++                    bestAny->selfOnFromSide = yTop <= snapped.y;
+                 }
+             }
+         }
+@@ -1112,9 +1165,14 @@ static auto findAlignmentX(double x, double width, double yTop, double yBottom,
+         for (auto& cs: candidatesSelf) {
+             for (auto& co: candidatesOther) {
+                 if (std::abs((cs.value + offset) - co.value) < tolerance) {
+-                    guides.push_back(AlignmentMatch{offset, co.value, std::min(yTop, snapped.y),
+-                                                     std::max(yBottom, snapped.y + snapped.height),
+-                                                     cs.isCenter || co.isCenter, false});
++                    double guideFrom;
++                    double guideTo;
++                    computeGuideExtent(yTop, yBottom, snapped.y, snapped.y + snapped.height, guideFrom, guideTo);
++                    AlignmentMatch guide{offset, co.value, guideFrom, guideTo, cs.isCenter || co.isCenter, false};
++                    guide.selfIsCenter = cs.isCenter;
++                    guide.otherIsCenter = co.isCenter;
++                    guide.selfOnFromSide = yTop <= snapped.y;
++                    guides.push_back(guide);
+                 }
+             }
+         }
+@@ -1182,7 +1240,7 @@ void EditSelection::mouseMove(double mouseX, double mouseY, bool alt) {
+                     this->activeGuidesX.clear();
+                     for (auto& g: matchX->guides) {
+                         this->activeGuidesX.push_back(
+-                                AlignmentGuide{g.coordinate, g.extentFrom, g.extentTo, g.isCenter, g.isBoosted, g.equidistantGaps, g.equidistantPlacement});
++                                AlignmentGuide{g.coordinate, g.extentFrom, g.extentTo, g.isCenter, g.isBoosted, g.selfIsCenter, g.otherIsCenter, g.selfOnFromSide, g.equidistantGaps, g.equidistantPlacement});
+                     }
+                 } else {
+                     this->activeGuidesX.clear();
+@@ -1193,7 +1251,7 @@ void EditSelection::mouseMove(double mouseX, double mouseY, bool alt) {
+                     this->activeGuidesY.clear();
+                     for (auto& g: matchY->guides) {
+                         this->activeGuidesY.push_back(
+-                                AlignmentGuide{g.coordinate, g.extentFrom, g.extentTo, g.isCenter, g.isBoosted, g.equidistantGaps, g.equidistantPlacement});
++                                AlignmentGuide{g.coordinate, g.extentFrom, g.extentTo, g.isCenter, g.isBoosted, g.selfIsCenter, g.otherIsCenter, g.selfOnFromSide, g.equidistantGaps, g.equidistantPlacement});
+                     }
+                 } else {
+                     this->activeGuidesY.clear();
+@@ -1778,50 +1836,62 @@ void EditSelection::paint(cairo_t* cr, double zoom) {
+         cairo_set_dash(cr, nullptr, 0, 0);
+ 
+         for (auto& guide: this->activeGuidesX) {
++            double gx = guide.coordinate * zoom;
+             if (guide.isBoosted) {
+                 cairo_set_source_rgb(cr, 0.0, 0.55, 1.0);  // vivid electric blue
+-            } else if (guide.isCenter) {
+-                cairo_set_source_rgb(cr, 0.0, 0.8, 0.2);  // green
+-            } else {
++                cairo_move_to(cr, gx, guide.from * zoom);
++                cairo_line_to(cr, gx, guide.to * zoom);
++                cairo_stroke(cr);
++            } else if (!guide.equidistantGaps.empty()) {
+                 cairo_set_source_rgb(cr, 1.0, 0.0, 0.8);  // bright pink
+-            }
+-            if (!guide.equidistantGaps.empty()) {
+-                // Equidistant match: one double-headed arrow per gap in the chain, drawn horizontally
+-                // (this is a horizontal row being equally spaced along X) at a fixed Y offset
+-                // (equidistantPlacement) below the row.
+                 double py = guide.equidistantPlacement * zoom;
+                 for (auto& [gapFrom, gapTo]: guide.equidistantGaps) {
+                     drawDoubleArrow(cr, gapFrom * zoom, py, gapTo * zoom, py);
+                 }
+-                continue;
++            } else {
++                double mid = (guide.from + guide.to) / 2 * zoom;
++                bool firstHalfIsCenter = guide.selfOnFromSide ? guide.selfIsCenter : guide.otherIsCenter;
++                bool secondHalfIsCenter = guide.selfOnFromSide ? guide.otherIsCenter : guide.selfIsCenter;
++                cairo_set_source_rgb(cr, firstHalfIsCenter ? 0.0 : 1.0, firstHalfIsCenter ? 0.8 : 0.0,
++                                     firstHalfIsCenter ? 0.2 : 0.8);
++                cairo_move_to(cr, gx, guide.from * zoom);
++                cairo_line_to(cr, gx, mid);
++                cairo_stroke(cr);
++                cairo_set_source_rgb(cr, secondHalfIsCenter ? 0.0 : 1.0, secondHalfIsCenter ? 0.8 : 0.0,
++                                     secondHalfIsCenter ? 0.2 : 0.8);
++                cairo_move_to(cr, gx, mid);
++                cairo_line_to(cr, gx, guide.to * zoom);
++                cairo_stroke(cr);
+             }
+-            double gx = guide.coordinate * zoom;
+-            cairo_move_to(cr, gx, guide.from * zoom);
+-            cairo_line_to(cr, gx, guide.to * zoom);
+-            cairo_stroke(cr);
+         }
+         for (auto& guide: this->activeGuidesY) {
++            double gy = guide.coordinate * zoom;
+             if (guide.isBoosted) {
+                 cairo_set_source_rgb(cr, 0.0, 0.55, 1.0);  // vivid electric blue
+-            } else if (guide.isCenter) {
+-                cairo_set_source_rgb(cr, 0.0, 0.8, 0.2);  // green
+-            } else {
++                cairo_move_to(cr, guide.from * zoom, gy);
++                cairo_line_to(cr, guide.to * zoom, gy);
++                cairo_stroke(cr);
++            } else if (!guide.equidistantGaps.empty()) {
+                 cairo_set_source_rgb(cr, 1.0, 0.0, 0.8);  // bright pink
+-            }
+-            if (!guide.equidistantGaps.empty()) {
+-                // Equidistant match: one double-headed arrow per gap in the chain, drawn vertically
+-                // (this is a vertical column being equally spaced along Y) at a fixed X offset
+-                // (equidistantPlacement) to the right of the column.
+                 double px = guide.equidistantPlacement * zoom;
+                 for (auto& [gapFrom, gapTo]: guide.equidistantGaps) {
+                     drawDoubleArrow(cr, px, gapFrom * zoom, px, gapTo * zoom);
+                 }
+-                continue;
++            } else {
++                double mid = (guide.from + guide.to) / 2 * zoom;
++                bool firstHalfIsCenter = guide.selfOnFromSide ? guide.selfIsCenter : guide.otherIsCenter;
++                bool secondHalfIsCenter = guide.selfOnFromSide ? guide.otherIsCenter : guide.selfIsCenter;
++                cairo_set_source_rgb(cr, firstHalfIsCenter ? 0.0 : 1.0, firstHalfIsCenter ? 0.8 : 0.0,
++                                     firstHalfIsCenter ? 0.2 : 0.8);
++                cairo_move_to(cr, guide.from * zoom, gy);
++                cairo_line_to(cr, mid, gy);
++                cairo_stroke(cr);
++                cairo_set_source_rgb(cr, secondHalfIsCenter ? 0.0 : 1.0, secondHalfIsCenter ? 0.8 : 0.0,
++                                     secondHalfIsCenter ? 0.2 : 0.8);
++                cairo_move_to(cr, mid, gy);
++                cairo_line_to(cr, guide.to * zoom, gy);
++                cairo_stroke(cr);
+             }
+-            double gy = guide.coordinate * zoom;
+-            cairo_move_to(cr, guide.from * zoom, gy);
+-            cairo_line_to(cr, guide.to * zoom, gy);
+-            cairo_stroke(cr);
+         }
+         cairo_restore(cr);
+     }
+diff --git a/src/core/control/tools/EditSelection.h b/src/core/control/tools/EditSelection.h
+index cd0a8b7..c0ad5e7 100644
+--- a/src/core/control/tools/EditSelection.h
++++ b/src/core/control/tools/EditSelection.h
+@@ -446,6 +446,9 @@ private:  // DATA
+         double to;
+         bool isCenter;
+         bool isBoosted;
++        bool selfIsCenter = false;
++        bool otherIsCenter = false;
++        bool selfOnFromSide = true;
+         std::vector<std::pair<double, double>> equidistantGaps;
+         double equidistantPlacement = 0;
+     };

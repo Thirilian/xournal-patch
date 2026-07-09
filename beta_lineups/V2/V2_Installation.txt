@@ -1,0 +1,227 @@
+# Dépendances de compilation
+sudo apt-get update
+sudo apt-get install curl cmake ninja-build libgtk-3-dev libpoppler-glib-dev portaudio19-dev libsndfile-dev \
+  dvipng texlive libxml2-dev liblua5.4-dev libzip-dev librsvg2-dev gettext \
+  libgtksourceview-4-dev help2man libqpdf-dev git
+
+
+
+# Appliquer le patch
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_paste_follow_cursor_v3.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_txt_prefill.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_resize_ratio_v3.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_force_recompile.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_color_widget_v3.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_floating_marks_v2.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_fix_warnings.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_fine_arrow_move.py
+
+python3 apply_paste_follow_cursor_v3.py
+python3 apply_txt_prefill.py
+python3 apply_resize_ratio_v3.py
+python3 apply_force_recompile.py
+python3 apply_color_widget_v3.py
+python3 apply_floating_marks_v2.py
+python3 apply_fix_warnings.py # changes the code to avoid warnings on building. Can be uncommented
+python3 ~/apply_fine_arrow_move.py
+
+
+
+# cloner les sources
+cd ~/Documents
+git clone https://github.com/xournalpp/xournalpp
+cd xournalpp
+
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_arrow_resize_fix_v2.py
+python3 apply_arrow_resize_fix_v2.py
+
+cp ~/Téléchargements/apply_alignment_snap_v7_11.py .
+python3 apply_alignment_snap_v7_11.py
+
+cp ~/Téléchargements/apply_alignment_snap_v8_1_0.py .
+python3 apply_alignment_snap_v8_1_0.py
+
+cp ~/Téléchargements/apply_alignment_snap_v8_2_0.py .
+python3 apply_alignment_snap_v8_2_0.py
+
+cp ~/Téléchargements/apply_alignment_snap_v8_3_0.py .
+python3 apply_alignment_snap_v8_3_0.py
+
+cp ~/Téléchargements/apply_alignment_snap_v8_4_0.py .
+python3 apply_alignment_snap_v8_4_0.py
+
+cp ~/Téléchargements/apply_alignment_snap_v8_5_0.py .
+python3 apply_alignment_snap_v8_5_0.py
+
+cp ~/Téléchargements/apply_alignment_snap_v8_6_A.py .
+python3 apply_alignment_snap_v8_6_A.py
+
+cp ~/Téléchargements/apply_alignment_snap_v8_6_B.py .
+python3 apply_alignment_snap_v8_6_B.py
+cp ~/Téléchargements/apply_alignment_snap_v8_6_B_2.py .
+python3 apply_alignment_snap_v8_6_B_2.py
+
+cp ~/Téléchargements/apply_alignment_snap_v8_7_0.py .
+python3 apply_alignment_snap_v8_7_0.py
+
+cp ~/Téléchargements/apply_alignment_snap_v8_9_0.py .
+python3 apply_alignment_snap_v8_9_0.py
+
+cp ~/Téléchargements/apply_alignment_snap_v10_1.py .
+python3 apply_alignment_snap_v10_1.py
+cp ~/Téléchargements/apply_alignment_snap_v10_2.py .
+python3 apply_alignment_snap_v10_2.py
+cp ~/Téléchargements/apply_alignment_snap_v10_3.py .
+python3 apply_alignment_snap_v10_3.py
+cp ~/Téléchargements/apply_alignment_snap_v10_4.py .
+python3 apply_alignment_snap_v10_4.py
+cp ~/Téléchargements/apply_alignment_snap_v10_5.py .
+python3 apply_alignment_snap_v10_5.py
+cp ~/Téléchargements/apply_alignment_snap_v10_6A.py .
+python3 apply_alignment_snap_v10_6A.py
+cp ~/Téléchargements/apply_alignment_snap_v10_6A_2.py .
+python3 apply_alignment_snap_v10_6A_2.py
+cp ~/Téléchargements/apply_alignment_snap_v10_6B.py .
+python3 apply_alignment_snap_v10_6B.py
+cp ~/Téléchargements/apply_alignment_snap_v10_6B_2.py .
+python3 apply_alignment_snap_v10_6B_2.py
+cp ~/Téléchargements/apply_alignment_snap_v10_7.py .
+python3 apply_alignment_snap_v10_7.py
+cp ~/Téléchargements/apply_alignment_snap_v10_9.py .
+python3 apply_alignment_snap_v10_9.py
+cp ~/Téléchargements/apply_alignment_snap_v10_9_2.py .
+python3 apply_alignment_snap_v10_9_2.py
+
+# Compiler
+mkdir build
+cd build
+sudo cmake .. -DCMAKE_INSTALL_PREFIX=install -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+sudo cmake --build .
+sudo cmake --build . --target install
+sudo cmake --install . --prefix /usr/local
+xournalpp
+
+# retirer les fichiers de build
+cd
+sudo rm -rf ~/Documents/xournalpp
+
+
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v8_1.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v8_1_2.py
+cp ~/Téléchargements/apply_alignment_snap_v8_1_3.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_2_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_3_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_4.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_4_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_4_3.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_4_4.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_5.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_5_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_3.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_3_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_3_3.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_4.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_4_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_4_3.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_4_4.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_4_5.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_4_6.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_5.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_6.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_7.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_8.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_7_2.py .
+# cp ~/Téléchargements/apply_alignment_snap_v8_8.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_9.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_9_1.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_9_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v9_1.py .
+
+python3 apply_alignment_snap_v7_10.py
+python3 apply_alignment_snap_v8_1.py
+python3 apply_alignment_snap_v8_1_2.py
+python3 apply_alignment_snap_v8_1_3.py
+python3 apply_alignment_snap_v8_2.py
+python3 apply_alignment_snap_v8_2_2.py
+python3 apply_alignment_snap_v8_3_2.py
+python3 apply_alignment_snap_v8_4.py
+python3 apply_alignment_snap_v8_4_2.py
+python3 apply_alignment_snap_v8_4_3.py #---  presque parfait
+python3 apply_alignment_snap_v8_4_4.py #---  parfait
+python3 apply_alignment_snap_v8_5.py
+python3 apply_alignment_snap_v8_6.py
+python3 apply_alignment_snap_v8_6_2.py
+python3 apply_alignment_snap_v8_6_3.py
+python3 apply_alignment_snap_v8_6_3_2.py
+python3 apply_alignment_snap_v8_6_3_3.py
+python3 apply_alignment_snap_v8_6_4.py
+python3 apply_alignment_snap_v8_6_4_2.py
+python3 apply_alignment_snap_v8_6_4_3.py
+python3 apply_alignment_snap_v8_6_4_4.py
+python3 apply_alignment_snap_v8_6_4_5.py
+python3 apply_alignment_snap_v8_6_4_6.py
+python3 apply_alignment_snap_v8_6_5.py
+python3 apply_alignment_snap_v8_6_6.py
+python3 apply_alignment_snap_v8_6_7.py
+python3 apply_alignment_snap_v8_6_8.py
+python3 apply_alignment_snap_v8_7_2.py
+# python3 apply_alignment_snap_v8_8.py
+python3 apply_alignment_snap_v8_9.py
+python3 apply_alignment_snap_v8_9_1.py
+python3 apply_alignment_snap_v8_9_2.py
+python3 apply_alignment_snap_v9_1.py
+
+
+# Compiler
+mkdir build
+cd build
+sudo cmake .. -DCMAKE_INSTALL_PREFIX=install -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+sudo cmake --build .
+sudo cmake --build . --target install
+sudo cmake --install . --prefix /usr/local
+xournalpp
+
+# retirer les fichiers de build
+cd
+sudo rm -rf ~/Documents/xournalpp
+
+C'est bien mais ce n'est pas ce que je veux. Il est très important que le patch (le .py) permette de modifier un clone frais en pouvant être appliqué __par dessus__ d'autres patchs
+
+
+
+
+
+Pour moi tu as raison, 0.5 est une bonne idée pour la deuxième passe mais
+
+1- la première passe garde sa tolérence de 6px
+
+2- les deux valeurs 6px et 0.5 px seront modifiables via les préférences au patch 10.10.
+
+
+
+Dans un patch 9.2 :
+
+différencier la tolérence de 6.0px pour la première passe et une tolérence à 0.5px pour la deuxième passe.
+
+
+
+Pour le patch 10.10.1 :
+
+On ajoute un texte en dessous de chaque ligne copchable pour expliqur  en anglais ce qu'appoertent les fonctionnalités optionnelles
+
+
+
+Pour le patch 10.1.2 :
+
+On ajoute un cadre "settings" dans l'onglet préférence (sous functionalities)
+
+Dans ce cadre, un autre cadre appelé "Normal" dans lequel tu mets pour chaque valeurs, un label 'colonne constante'  dans ton tableau, suivi par une zone de texte modifiable par l'utilisateur qui contient la valeur de la variable, et à droite de ça tu mets la valeur qui est dans la colonne "valeur actuelle" en texte indicatif entre parenthèses pour indiquer la valeur par défaut.
+
+En dessous de ça, tu écris le rôle de la variable concernée. Donc tu fais ça pour chaque variable présentée dans ton tableau "Candidats sérieux (probablement utiles à régler)". En dessous du cadre "Normal" (toujours dans le cadre "settings") tu ajoutes un cadre "Advanced" que tu remplis sur le même principe mais avec les variables de ton tableau "Candidats plus "avancés"".
+
+
+
+Ne crée aucun patch pour l'instant, c'était une présentation de mon plan pour la suite.

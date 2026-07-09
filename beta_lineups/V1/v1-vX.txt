@@ -1,0 +1,204 @@
+# Dépendances de compilation
+sudo apt-get update
+sudo apt-get install curl cmake ninja-build libgtk-3-dev libpoppler-glib-dev portaudio19-dev libsndfile-dev \
+  dvipng texlive libxml2-dev liblua5.4-dev libzip-dev librsvg2-dev gettext \
+  libgtksourceview-4-dev help2man libqpdf-dev git
+
+# cloner les sources
+cd ~/Images/
+git clone https://github.com/xournalpp/xournalpp
+cd xournalpp
+
+# Appliquer le patch
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_arrow_resize_fix_v2.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v1.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v2.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v3.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v4.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v5.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v6.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v7.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v7_5.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v7_6.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v7_8.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v7_9.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v8_1.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/beta_lineups/apply_alignment_snap_v8_1_2.py
+cp ~/Téléchargements/apply_alignment_snap_v8_1_3.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_2_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_3_0.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_4.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_4_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_4_3.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_4_4.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_5.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_5_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_3.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_3_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_3_3.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_4.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_4_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_4_3.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_4_4.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_4_5.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_4_6.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_5.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_6.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_7.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_6_8.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_7_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_9.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_9_1.py .
+cp ~/Téléchargements/apply_alignment_snap_v8_9_2.py .
+cp ~/Téléchargements/apply_alignment_snap_v9_1.py .
+
+
+python3 apply_arrow_resize_fix_v2.py
+python3 apply_alignment_snap_v1.py
+python3 apply_alignment_snap_v2.py
+python3 apply_alignment_snap_v3.py
+python3 apply_alignment_snap_v4.py
+python3 apply_alignment_snap_v5.py
+python3 apply_alignment_snap_v6.py
+python3 apply_alignment_snap_v7.py
+python3 apply_alignment_snap_v7_5.py
+python3 apply_alignment_snap_v7_6.py
+python3 apply_alignment_snap_v7_8.py
+python3 apply_alignment_snap_v7_9.py
+python3 apply_alignment_snap_v8_1.py
+python3 apply_alignment_snap_v8_1_2.py
+python3 apply_alignment_snap_v8_1_3.py
+python3 apply_alignment_snap_v8_2.py
+python3 apply_alignment_snap_v8_2_2.py
+python3 apply_alignment_snap_v8_3_0.py
+python3 apply_alignment_snap_v8_4.py
+python3 apply_alignment_snap_v8_4_2.py
+python3 apply_alignment_snap_v8_4_3.py #---  presque parfait
+python3 apply_alignment_snap_v8_4_4.py #---  parfait
+python3 apply_alignment_snap_v8_5.py
+python3 apply_alignment_snap_v8_5_2.py
+python3 apply_alignment_snap_v8_6.py
+python3 apply_alignment_snap_v8_6_2.py
+python3 apply_alignment_snap_v8_6_3.py
+python3 apply_alignment_snap_v8_6_3_2.py
+python3 apply_alignment_snap_v8_6_3_3.py
+python3 apply_alignment_snap_v8_6_4.py
+python3 apply_alignment_snap_v8_6_4_2.py
+python3 apply_alignment_snap_v8_6_4_3.py
+python3 apply_alignment_snap_v8_6_4_4.py
+python3 apply_alignment_snap_v8_6_4_5.py
+python3 apply_alignment_snap_v8_6_4_6.py
+python3 apply_alignment_snap_v8_6_5.py
+python3 apply_alignment_snap_v8_6_6.py
+python3 apply_alignment_snap_v8_6_7.py
+python3 apply_alignment_snap_v8_6_8.py
+python3 apply_alignment_snap_v8_7_2.py
+python3 apply_alignment_snap_v8_9.py
+python3 apply_alignment_snap_v8_9_1.py
+python3 apply_alignment_snap_v8_9_2.py
+python3 apply_alignment_snap_v9_1.py
+
+cd
+
+# Compiler
+mkdir build
+cd build
+sudo cmake .. -DCMAKE_INSTALL_PREFIX=install -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+sudo cmake --build .
+sudo cmake --build . --target install
+sudo cmake --install . --prefix /usr/local
+xournalpp
+
+# retirer les fichiers de build
+cd
+sudo rm -rf ~/Images/xournalpp
+
+
+# cp ~/Téléchargements/apply_alignment_snap_v8_8.py .
+cp ~/Téléchargements/apply_alignment_snap_v9_1.py .
+
+
+
+# python3 apply_alignment_snap_v8_8.py
+
+
+# Compiler
+mkdir build
+cd build
+sudo cmake .. -DCMAKE_INSTALL_PREFIX=install -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+sudo cmake --build .
+sudo cmake --build . --target install
+sudo cmake --install . --prefix /usr/local
+xournalpp
+
+# retirer les fichiers de build
+cd
+sudo rm -rf ~/Documents/xournalpp
+
+
+Remarques en vue du patch 5
+1- C'est super, jes points d'ancrage ont l'air harmonisés dans ce cas (capture d'écarn 1). Mais dans la version précédente, l'un des deux strokes (celle non sélectionnée) avait son point d'anchrage qui était vraiment à la limite extrême du bord visible de la stroke. Je préférais comme ça. Tu peux décaler les points d'ancrages des extrêmités des lignes horizontales et verticales à leur maximum visble ? à noter que ce point 1 est un parti pris, il est possible que ke te demande de replacer l'ancrage des extrémités exactement tel qu'il est actuellement au patch 4 si le rendu de ce que je te propose de faire ne me plait finalement pas au patch 5
+2- Ma faute : j'ai oublié de parler du plus important : en plus d'avoir un plus grand snaping power que les autres, le cas de la ligne bleue doit aussi prendre le pas sur tous les autres snapings possibles. En d'autres termes, si la ligne bleue de snapping est déclenchée verticalement, elle prend le pas sur les autres snapping verticaux possibl. Pareil pour l'horizontal., si la ligne bleue est déclenchée verticalement mais que d'autres snapping verticaux peuvent être déclenchés, il ne faut y avoir que la ligne de guidage bleue en vertical (et pareil pour l'horizontal : si la ligne bleue est déclenchée horizontalement, elle prend le pas sur les snaping horizontaux possibles proches). En outre : Le cas de la ligne bleue ne peut être déclenché que   si une stroke verticale ou horizontale mesurant moins de 15 points (points c'est l'unité utilisée pour le déplacement avec les flèches) est sélectionnée et qu'elle est en intersection avec une autre ligne perpendiculaire plus longue (tu peux t'appuyer sur les captures d'écrans 2 à 10 et me poser des questions si besoin pour comprendre mes attentes)
+ Il faudrait aussi changer la couleur du bleu pour un bleu encore plus pétant s'il te plaît
+3- le raccourcis Ctrl+B fonctionne à merveille c'est génial merci !
+4- je n'ai pas pu modifier la valeur 0.7 pour obtenir un résultat qui me convient mais je t'ai fait une capture d'écran (voir capture d'écran 11) pour te montrer le usecase que j'essaie de couvrir. Actuellement le point d'ancrage en horizontal des textbox se fait à l'endroit où se trouve la stroke que j'ai dessiné en bleu et je voudrais que le point d'ancrage en horizontal des textbox soit décalé à la hauteur de la stroke que j'ai dessiné en rouge
+
+5- Sur le même principe que le point 1, le snapping "central" (vert) devrait avoir la priorité d'affichage : dans l'exemple de la capture d'écran 1, les deux lignes sont identiques et théoriquement parfaitement alignées alors en théorie, on devrait avoir les deux lignes roses sur les côté et la ligne verte qui s'affichent. Si ce n'est pas poossible, il faudrait uniquement donné la proiorité au snapping central (vert) par rappoort aux snaping des extrémités (rose)
+
+
+
+Point 2 : poroposition de corrrectif : Palier vert a un snaping un toout petit peu plus fort que le palier rose (donc si il y a à choisir entre une ligne rose et une ligne verte très proches sur un axe, le snaping se fera sur la ligne verte, et pas sur la ligne rose, mais pas de "match impliquant un centre, il est
+----------------------------------------------
+
+1- oui, modifie buildCandidates() parce que l'alignement des traits fins en est affecté et ce n'est pas ce qu'on veut.
+
+Point 3 : c'est exactement ça : si palier bleu, on affiche qu'une seule ligne de guidage (la bleue) sur l'axe concerné
+
+5- Je pense que le plus simple serait de modifier le code du palier bleu pour remédier au cas de "petit trait en intersection avec un grand trait d'une arrow" pour que dans ce cas là, le snaping ne prenne pas en compte les ancrage des pointes de flèche, et qu'on retombe dans le cas classique super bien implémenté de "petite line en intersection avec une grande ligne
+______________________________________________
+Idées pour patch
+Patch 8.1 :
+Les guidelines équidistantes
+
+Patch 8.2
+La ligne de guidage est scindée en deux lignes égales. La ligne qui part  de l'objet sélectionnée d'une part et la ligne qui partde /va vers l'objet cible de l'autre. Les deux lignes doivent avoir la couleur qui est adaptée :
+Si la ligne part d'un bord de l'objet sélectionné et arrive au centre d'un objet cible, la ligne côté sélectionné (première moitié) doit être rose au départ et verte à l'arrivée (deuxième moitié)
+
+Patch 8.2.2
+C'est génial ça  marche !
+
+Cependant voici une correction à appliquer pour un patch 8.2.2 :
+
+Si l'objet self et l'objet cible sont à plus de 5 pt de distance, les guidelines doivent commencer et terminer aux deux points d'ancrages alignés qui sont les plus proches. Le problème que j'essaie de montrer c'est qu'actuellement, si on aligne deux lignes perpendiculaires, la première moitié recouvrve toujours la ligne cible, si celle-ci est parallèle à la guideline. Si les deux objets sont assez éloignés, je voudrais que less guidelines n'occupent que l'espace "vide" entre les deux objets
+
+
+Patch 8.3 (il peut être dépendant des patchs 1 à 7.9 mais pas des patch 8.1, 8.2 ou d'une sous version de ces patch):
+Ajouter un point d'ancrage pour centrer les objets en abcysse par rapport à la page actuelle. La ligne de guidage qui résulte de ce snapping doit être grise et traverser tout l'écran visible par l'utilisateur (elle peut partir du haut de la page actuelle et arriver en bas si c'est plus pratique).
+Petite subtilité :
+Si le background de la page sur laquelle est l'objet sélectionné est "Tracé avec ligne verticale", le point d'ancrage pour centrer les objets par rapport à la page doit être décalé sur la droite : la calcul "coordonnée en abcysse" doit partir de la marge rouge, et plus du bord gauche de la page vers le bord de la page. Si le background de la page sur laquelle est l'objet sélectionné est "Avec lignes et marge à droite", la position du point d'ancrage doit changer. Dis moi si tu vois de quels background je parle et comment ils s'apellent dans le code s'il te plaît
+
+Patch 8.4 :
+Si une ligne verticale est entrain d'être créée (dans mon exemple, de bas en haut), qu'elle est plus longue que 50pt et qu'elle croise une autre ligne plus longue que 50pt déjà créée qui est horizontale, le système dessine un petit segment rose horizontal de 15 pt en bas (à l'origine, au point actuellement immuable) de la ligne qui est entrain dd'être dessinée. Le système dessine aussi une ligne rose horizeontale de 15pt alignée avec la ligne hjorizontale plus bassur l'axe x. La distance entre les deux uideline roses doit être égale à la longueur de la ligne horizontale déjà tracée. Si la ligne qui est entrain d'être dessinée atteint la guideline rose du haut, la ligne verticale qui est entrain d'être dessinée est snap. Si la ligne va plus haut que le marqueur rose du haut, les deux marqueuers disparaissent. Si pendant la construction, la ligne verticale redevuient moins longue que la ligne horizontale, les deux guidelines roses réaparaissent. Cela fonctionne avec une ligne verticale dessinée de haut en bas ou avec une ligne horizontale dessinée de gauche à droite ou de droite à gauche.
+
+Patch 8.5 :
+Snaping si la hauteur est à peu près égale à la longueur
+
+Patch 8.6 :
+la véritable  fonctionnalité du palier bleu : Si on est dans le cas du palier bleu (qu'on est donc entrain de déplacer une petite ligne déjà créée le long d'une grande ligne) et que la grande lingne a déjà __une__ (et pas plus d'une) petite ligne (non sélectionnée), qui l'intersecte, le système dessine des petites guideline bleues parallèles et de même taille que la petite ligne actuellement sélectionnée tout le long de la grande ligne en direction extérieure à la petite ligne sélectionnée (si la petite ligne sélectionnée est à droite de la petite ligne non sélectionnée, les guidelines seront tracées tout le long de la grande ligne vers la droite). Les guidelines doivent être équidistantes et la distance qui les sépare doit être égale à la distance qui sépare la petite ligne sélectionnée et la petite ligne non sélectionnée. ## L'idée est que ces petites guidelines bleues aparaissent si il y a deux petites lignes en intersection avec la grande ligne et que l'une des deux lignes est déplacée dans l'axe (donc sélectionnée, clique gauche enfoncé) mais que les guidelines b disparaissent si  petite ligne non ## Si la grande ligne est déjà en intersection avec au moins deux petites lignes non sélectionnées et que toutes ces lignes non sélectionnées sont équidistantes, le système tracera simplement les petites guidelines bleues en direction extérieure à la ligne actuellement sélectionnée.
+
+Patch 8.6.4 : puissance de snapping en cas de palier bleu : 2.25-> 4.0. nouvelle fonctionnalité :
+
+(exemple sur le cas d'une grande ligne horizontale).
+
+Si plus de deux lignes sont snapées, qu'on sélectionne une ligne et qu'on la tire vers le haut (au delà d'un certain seuil) mais qu'elle est encore snapée à la grande ligne horisontale, et que la lmongueur de cette ligne sélectionnée est supérieure ou égale à 6pt, le comportement change : On entre dans un comportement "snappedMarkTop" :
+
+Dans ce mode, toutes les guidelines affichées ne montrent que leur moitié haute. Si le clic est relaché dans cette situation, on update toutes les lignes de la même taille que cette sélectionnée qui seraient snapées sur la grande ligne : leur seul point d'ancrage se situe maintenant à l'extrémité basse. Leur longueur est divisée par deux, l'idée étant que la moitié basse de la ligne disparaisse. En mode snappedMarkTop, si on essaie de snap une petite ligne qui fait pile deux fois la longueur des petites lignes déjà snapées, lorsque le clic est relaché, le redimensionnement s'effectue.
+À tout moment, l'une des lignes est sélectionnée et tirée vers le bas, on repasse au mode snappedMarkMiddle (le cas dans lequel on était au début). et si on dragg encore plus vers le bas, on passe en mode "snappedMarkBelow". évidemment, c'est dispo pour les grandes lignes verticales. Tu as tout compris ? C'est une idée difficile à exprimer donc on va avoir besoin d'en discuter pour être sûr de ce qu'on cherche.
+
+Patch 8.7
+Je veux un système qui centre les textbox dans les lignes et les colonnes d'un tableau. Voilà comment je vois le truc : Si la textbox est entre les deux lignes parallèles et de même loongueur horizontales ou verticales dont le début et la fin vont plus loin que les bords de la textbox, on crée un point d'ancrage possible entre le centre de la textbox et le millieu des deux lignes. Si ce point d'ancrage est activé, cela doit être monntré par la présence d'une guideline jaune paarallle aux lignes et cette guideline va du début à la fin fin de ces lignes. La guideline est évidemment centrée entre la ligne de gauche et la ligne de droite.
+
+Patch 8.9 : Lors du dessin avec l'outil "tracer des splines",  le point mobile (celui qui suit le curseur) doit se snaper dynamiquement avec les paliers vertss ou rose

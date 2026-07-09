@@ -1,0 +1,182 @@
+diff --git a/a/src/core/control/tools/EditSelection.h b/b/src/core/control/tools/EditSelection.h
+index cc52895..feaa43a 100644
+--- a/a/src/core/control/tools/EditSelection.h
++++ b/b/src/core/control/tools/EditSelection.h
+@@ -435,7 +435,8 @@ private:  // DATA
+      * A single active alignment guide line: `coordinate` is the aligned x (for a vertical guide) or
+      * y (for a horizontal guide); `from`/`to` delimit the segment (in the perpendicular axis) that
+      * spans between the moving selection and the element it is aligned with, so the drawn line
+-     * visually connects the two.
++     * visually connects the two. `isPageCenter`/`hasPageMargin`/`pageMarginX`: see AlignmentMatch in
++     * EditSelection.cpp.
+      */
+     struct AlignmentGuide {
+         double coordinate;
+@@ -443,6 +444,9 @@ private:  // DATA
+         double to;
+         bool isCenter;
+         bool isBoosted;
++        bool isPageCenter = false;
++        bool hasPageMargin = false;
++        double pageMarginX = 0;
+     };
+ 
+     /// Vertical guide lines (constant x), set during mouseMove() while dragging, if any. Usually a
+diff --git a/a/src/core/control/tools/EditSelection.cpp b/b/src/core/control/tools/EditSelection.cpp
+index 616299e..a0dfdf8 100644
+--- a/a/src/core/control/tools/EditSelection.cpp
++++ b/b/src/core/control/tools/EditSelection.cpp
+@@ -25,6 +25,8 @@
+ #include "model/ElementInsertionPosition.h"
+ #include "model/Layer.h"                          // for Layer
+ #include "model/LineStyle.h"                      // for LineStyle
++#include "model/BackgroundConfig.h"                // for BackgroundConfig
++#include "model/PageType.h"                        // for PageType, PageTypeFormat
+ #include "model/Point.h"                          // for Point
+ #include "model/Stroke.h"                         // for Stroke
+ #include "model/Text.h"                           // for Text
+@@ -575,6 +577,10 @@ constexpr double ALIGNMENT_SNAP_TOLERANCE_PX = 6.0;
+  * `isCenter` is true if either of the two matched candidates was a center point (rather than an
+  * edge); `isBoosted` is true for the special "small stroke crossing a big perpendicular stroke,
+  * center-to-center" case (see isSmallCrossingBigPerpendicular()), drawn in a distinct color.
++ * `isPageCenter` is true for the "center relative to the page" match (see computePageCenterX()),
++ * drawn in gray, spanning the visible viewport rather than connecting to another element;
++ * `hasPageMargin`/`pageMarginX` additionally draw a second gray line at the page's own margin
++ * position, when the page background has one.
+  */
+ struct AlignmentMatch {
+     double offset;
+@@ -583,6 +589,9 @@ struct AlignmentMatch {
+     double extentTo;
+     bool isCenter;
+     bool isBoosted;
++    bool isPageCenter = false;
++    bool hasPageMargin = false;
++    double pageMarginX = 0;
+ };
+ 
+ /// Result of a full search on one axis: the offset that was chosen, plus every guide line
+@@ -713,6 +722,42 @@ static auto isSmallCrossingBigPerpendicular(double selfWidth, double selfHeight,
+  * xLeft/xRight are the moving box's horizontal extent, used both for the crossing/overlap check and
+  * to compute each guide line's span (perpendicular axis).
+  */
++/**
++ * Result of computePageCenterX(): `centerX` is the horizontal center to snap to; `marginX`, if set,
++ * is the position of the page's own vertical margin line (only for a Lined background), drawn as an
++ * extra guide alongside the center line - see paint().
++ */
++struct PageCenterInfo {
++    double centerX;
++    std::optional<double> marginX;
++};
++
++/**
++ * Computes where "horizontally centered on the page" means for `page`. For a plain page, this is
++ * simply half the page width. For a Lined background (ruled paper with a vertical margin line -
++ * see LinedBackgroundView), the margin splits the page into a usable area on one side and a margin
++ * strip on the other; centering is done within that usable area instead of the full page width, and
++ * the margin's own position is also returned, matching the same "margin < 0 means the line goes on
++ * the right" convention as LinedBackgroundView itself.
++ */
++static auto computePageCenterX(const XojPage* page) -> PageCenterInfo {
++    double pageWidth = page->getWidth();
++    PageType bg = page->getBackgroundType();
++    if (bg.format == PageTypeFormat::Lined) {
++        BackgroundConfig config(bg.config);
++        double margin = 72.0;  // matches LinedBackgroundView's own default
++        config.loadValue(background_config_strings::CFG_MARGIN, margin);
++        bool marginOnRight = margin < 0;
++        if (marginOnRight) {
++            margin += pageWidth;
++        }
++        double centerX = marginOnRight ? margin / 2.0 : (margin + pageWidth) / 2.0;
++        return {centerX, margin};
++    }
++    return {pageWidth / 2.0, std::nullopt};
++}
++
++
+ static auto findAlignmentY(double y, double height, double xLeft, double xRight, double tolerance, Layer* layer,
+                             const std::vector<const Element*>& excluded,
+                             const xoj::util::Rectangle<double>& visibleRect) -> std::optional<AlignmentSearchResult> {
+@@ -992,13 +1037,37 @@ void EditSelection::mouseMove(double mouseX, double mouseY, bool alt) {
+                 auto matchY = findAlignmentY(candidateY, height, candidateX, candidateX + width, tolerance,
+                                               this->sourceLayer, excluded, visibleRect);
+ 
++                // Snap to the page's own horizontal center (accounting for a Lined background's
++                // margin, if any). Competes with the ordinary X match on closeness, like equidistant
++                // snapping does, but never overrides a boosted (blue) match.
++                bool matchXIsBoostedForPageCenter = matchX && !matchX->guides.empty() && matchX->guides.front().isBoosted;
++                if (!matchXIsBoostedForPageCenter && this->sourcePage) {
++                    PageCenterInfo pageCenter = computePageCenterX(this->sourcePage.get());
++                    double pageCenterOffset = pageCenter.centerX - (candidateX + width / 2.0);
++                    if (std::abs(pageCenterOffset) < tolerance &&
++                        (!matchX || std::abs(pageCenterOffset) < std::abs(matchX->offset))) {
++                        AlignmentMatch pageMatch{pageCenterOffset,
++                                                  pageCenter.centerX,
++                                                  visibleRect.y,
++                                                  visibleRect.y + visibleRect.height,
++                                                  false,
++                                                  false};
++                        pageMatch.isPageCenter = true;
++                        if (pageCenter.marginX) {
++                            pageMatch.hasPageMargin = true;
++                            pageMatch.pageMarginX = *pageCenter.marginX;
++                        }
++                        matchX = AlignmentSearchResult{pageCenterOffset, {pageMatch}};
++                    }
++                }
++
+                 if (matchX) {
+                     dx += matchX->offset;
+                     objectSnappedX = true;
+                     this->activeGuidesX.clear();
+                     for (auto& g: matchX->guides) {
+                         this->activeGuidesX.push_back(
+-                                AlignmentGuide{g.coordinate, g.extentFrom, g.extentTo, g.isCenter, g.isBoosted});
++                                AlignmentGuide{g.coordinate, g.extentFrom, g.extentTo, g.isCenter, g.isBoosted, g.isPageCenter, g.hasPageMargin, g.pageMarginX});
+                     }
+                 } else {
+                     this->activeGuidesX.clear();
+@@ -1009,7 +1078,7 @@ void EditSelection::mouseMove(double mouseX, double mouseY, bool alt) {
+                     this->activeGuidesY.clear();
+                     for (auto& g: matchY->guides) {
+                         this->activeGuidesY.push_back(
+-                                AlignmentGuide{g.coordinate, g.extentFrom, g.extentTo, g.isCenter, g.isBoosted});
++                                AlignmentGuide{g.coordinate, g.extentFrom, g.extentTo, g.isCenter, g.isBoosted, g.isPageCenter, g.hasPageMargin, g.pageMarginX});
+                     }
+                 } else {
+                     this->activeGuidesY.clear();
+@@ -1552,7 +1621,9 @@ void EditSelection::paint(cairo_t* cr, double zoom) {
+ 
+     // Smart alignment guides: a bounded line connecting the moving selection to whichever element(s)
+     // it is currently aligned with. Pink for an edge alignment, green if either matched anchor was a
+-    // center point, blue for the special "small stroke crossing a big perpendicular stroke" case.
++    // center point, blue for the special "small stroke crossing a big perpendicular stroke" case,
++    // gray for centering on the page (spanning the visible viewport instead of connecting objects;
++    // draws a second gray line at the page's own margin position, if the background has one).
+     if (!this->activeGuidesX.empty() || !this->activeGuidesY.empty()) {
+         cairo_save(cr);
+         cairo_set_line_width(cr, 1.5);
+@@ -1561,6 +1632,8 @@ void EditSelection::paint(cairo_t* cr, double zoom) {
+         for (auto& guide: this->activeGuidesX) {
+             if (guide.isBoosted) {
+                 cairo_set_source_rgb(cr, 0.0, 0.55, 1.0);  // vivid electric blue
++            } else if (guide.isPageCenter) {
++                cairo_set_source_rgb(cr, 0.5, 0.5, 0.5);  // gray
+             } else if (guide.isCenter) {
+                 cairo_set_source_rgb(cr, 0.0, 0.8, 0.2);  // green
+             } else {
+@@ -1570,6 +1643,12 @@ void EditSelection::paint(cairo_t* cr, double zoom) {
+             cairo_move_to(cr, gx, guide.from * zoom);
+             cairo_line_to(cr, gx, guide.to * zoom);
+             cairo_stroke(cr);
++            if (guide.isPageCenter && guide.hasPageMargin) {
++                double mx = guide.pageMarginX * zoom;
++                cairo_move_to(cr, mx, guide.from * zoom);
++                cairo_line_to(cr, mx, guide.to * zoom);
++                cairo_stroke(cr);
++            }
+         }
+         for (auto& guide: this->activeGuidesY) {
+             if (guide.isBoosted) {
