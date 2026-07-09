@@ -8,32 +8,35 @@ sudo apt-get install curl cmake ninja-build libgtk-3-dev libpoppler-glib-dev por
 cd ~/Documents
 git clone https://github.com/xournalpp/xournalpp
 cd xournalpp
-
-# Appliquer le patch
-curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_paste_follow_cursor_v3.py
-curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_txt_prefill.py
-curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_resize_ratio_v3.py
-curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_force_recompile.py
-curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_color_widget_v3.py
-curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_floating_marks_v2.py
-curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_arrow_resize_fix_v2.py
-curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/Unused/apply_fix_warnings.py
-curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/Unused/apply_fine_arrow_move.py
-
-curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/Unused/apply_force_line_style_update_v2.py
+git clone https://github.com/Thirilian/xournal-patch
 
 
-python3 apply_paste_follow_cursor_v3.py
-python3 apply_txt_prefill.py
-python3 apply_resize_ratio_v3.py
-python3 apply_force_recompile.py
-python3 apply_color_widget_v3.py
-python3 apply_floating_marks_v2.py
-python3 apply_arrow_resize_fix_v2.py
-# python3 apply_fix_warnings.py # changes the code to avoid warnings on building. Can be uncommented
-python3 apply_fine_arrow_move.py
 
-python3 apply_force_line_style_update_v2.py
+python3 xournal-patch/apply_paste_follow_cursor_v3.py
+python3 xournal-patch/apply_txt_prefill.py
+python3 xournal-patch/apply_resize_ratio_v3.py
+python3 xournal-patch/apply_force_recompile.py
+python3 xournal-patch/apply_color_widget_v3.py
+python3 xournal-patch/apply_floating_marks_v2.py
+python3 xournal-patch/apply_arrow_resize_fix_v2.py
+python3 xournal-patch/apply_fix_warnings.py # changes the code to avoid warnings on building. Can be uncommented
+python3 xournal-patch/apply_fine_arrow_move.py
+
+python3 xournal-patch/beta_lineups/V3/apply_alignment_snap_v90.py
+python3 xournal-patch/beta_lineups/V3/apply_alignment_snap_v11_1.py
+python3 xournal-patch/beta_lineups/V3/apply_alignment_snap_v11_2.py
+python3 xournal-patch/beta_lineups/V3/apply_alignment_snap_v11_2_2.py
+python3 xournal-patch/beta_lineups/V3/apply_alignment_snap_v11_3.py
+python3 xournal-patch/beta_lineups/V3/apply_alignment_snap_v11_4.py
+python3 xournal-patch/beta_lineups/V3/apply_alignment_snap_v11_4_2.py
+python3 xournal-patch/beta_lineups/V3/apply_alignment_snap_v11_5.py
+python3 xournal-patch/beta_lineups/V3/apply_alignment_snap_v11_5_2.py
+python3 xournal-patch/beta_lineups/V3/apply_alignment_snap_v11_5_3.py
+
+python3 xournal-patch/apply_table_writing_assist.py
+python3 xournal-patch/apply_table_writing_assist_2.py
+
+python3 xournal-patch/apply_force_line_style_update_v2.py
 
 # Compiler
 mkdir build
