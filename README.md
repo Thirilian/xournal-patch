@@ -163,3 +163,8 @@ This patch rebinds Alt+Arrow key and adds a finer movement stage. Here are the n
 
 **Shift+Arrow key** movement with a 10-points step
 
+
+### Patch #11 : apply_force_line_style_update_v2.py
+So far, if you select a line style from the pen tool to update the line type of a selected object, and the line style you clicked is already selected by the tool, the line style of the object isn't updated. You have to select a different line style for the tool and reselect the style you wanted for the object to update.
+
+this patch fixes that.
