@@ -34,8 +34,6 @@ python3 xournal-patch/beta_lineups/V3/apply_alignment_snap_v11_5_2.py
 python3 xournal-patch/beta_lineups/V3/apply_alignment_snap_v11_5_3.py
 
 python3 xournal-patch/apply_table_writing_assist.py
-python3 xournal-patch/apply_table_writing_assist_2.py
-
 python3 xournal-patch/apply_force_line_style_update_v2.py
 
 # Compiler
