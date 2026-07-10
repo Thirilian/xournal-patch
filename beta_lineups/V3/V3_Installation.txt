@@ -1,0 +1,114 @@
+# cloner les sources
+cd ~/Documents
+git clone https://github.com/xournalpp/xournalpp
+cd xournalpp
+
+# Appliquer le patch
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_paste_follow_cursor_v3.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_txt_prefill.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_resize_ratio_v3.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_force_recompile.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_color_widget_v3.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_floating_marks_v2.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_fix_warnings.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_fine_arrow_move.py
+
+python3 apply_paste_follow_cursor_v3.py
+python3 apply_txt_prefill.py
+python3 apply_resize_ratio_v3.py
+python3 apply_force_recompile.py
+python3 apply_color_widget_v3.py
+python3 apply_floating_marks_v2.py
+python3 apply_fix_warnings.py # changes the code to avoid warnings on building. Can be uncommented
+python3 ~/apply_fine_arrow_move.py
+
+
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_arrow_resize_fix_v2.py
+python3 apply_arrow_resize_fix_v2.py
+
+cp ~/Téléchargements/apply_alignment_snap_v90.py .
+python3 apply_alignment_snap_v90.py
+
+cp ~/Téléchargements/apply_alignment_snap_v11_1.py .
+python3 apply_alignment_snap_v11_1.py
+cp ~/Téléchargements/apply_alignment_snap_v11_2.py .
+#python3 apply_alignment_snap_v11_2.py
+cp ~/Téléchargements/apply_alignment_snap_v11_2_2.py .
+#python3 apply_alignment_snap_v11_2_2.py
+cp ~/Téléchargements/apply_alignment_snap_v11_3.py .
+python3 apply_alignment_snap_v11_3.py
+cp ~/Téléchargements/apply_alignment_snap_v11_4.py .
+#python3 apply_alignment_snap_v11_4.py
+cp ~/Téléchargements/apply_alignment_snap_v11_4_2.py .
+#python3 apply_alignment_snap_v11_4_2.py
+cp ~/Téléchargements/apply_alignment_snap_v11_5.py .
+python3 apply_alignment_snap_v11_5.py
+cp ~/Téléchargements/apply_alignment_snap_v11_5_2.py .
+python3 apply_alignment_snap_v11_5_2.py
+cp ~/Téléchargements/apply_alignment_snap_v11_5_3.py .
+python3 apply_alignment_snap_v11_5_3.py
+cp ~/Téléchargements/apply_alignment_snap_v11_6.py .
+python3 apply_alignment_snap_v11_6.py
+
+# Compiler
+mkdir build
+cd build
+sudo cmake .. -DCMAKE_INSTALL_PREFIX=install -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+sudo cmake --build .
+sudo cmake --build . --target install
+sudo cmake --install . --prefix /usr/local
+xournalpp
+
+# retirer les fichiers de build
+cd
+sudo rm -rf ~/Documents/xournalpp
+___________________________________________________________________________________________
+# Bugs trouvés :
+
+# - pour les fonctionnalités implémentées en 8.4 et en 8.5 (coordinate system et circle assist), si on utilise le trait en pointillés, les guidelines générées par ces fonctionnalités seront en pointillé
+
+- modifier la condition de passage du mode top/middle/bottom :
+Je voudrais que le système fonctionne comme ça : dès qu'une petite ligne snapée est cliquée (clic gauche enfoncé, ligne sélectionnée bref prête à être dséplacée), il y ait trois zones possibles pour le curseur. Ces trois zones font en vertical à elles trois pile la hauteur calculée par Object alignment tolerence * Perpendicular cross boost factor (j'apelle cette valeur H dans notre exemple)). Le curseur commence centré dans ces trois zones. Ces trois zones sont réparties ainsi : 60%, 20%, 20%.
+- Cas "la petite ligne sélectionnée est en mode Middle au clic" : Les zones sont réparties de haut en bas ainsi :
+  - 20% : si la souris y entre, l'objet sélectionné passe en mode "Top" (preview, comme actuellement dans le code).
+  - 60% : si la souris y est, l'objet sélectionné reste en mode "Middle"
+  - 20% : si la souris y entre, l'objet sélectionné passe en mode "Below" (preview, comme actuellement dans le code).
+
+- Cas "la petite ligne sélectionnée est en mode Top au clic" : Les zones sont réparties de haut en bas ainsi :
+  - 60% : si la souris y est, l'objet sélectionné reste en mode "Top"
+  - 20% : si la souris y entre, l'objet sélectionné passe en mode "Middle" (preview, comme actuellement dans le code).
+  - 20% : si la souris y entre, l'objet sélectionné passe en mode "Below" (preview, comme actuellement dans le code).
+
+- Cas "la petite ligne sélectionnée est en mode Below au clic" : Les zones sont réparties de haut en bas ainsi :
+  - 20% : si la souris y entre, l'objet sélectionné passe en mode "Top" (preview, comme actuellement dans le code).
+  - 20% : si la souris y entre, l'objet sélectionné passe en mode "Middle" (preview, comme actuellement dans le code).
+  - 60% : si la souris y est, l'objet sélectionné reste en mode "Below"
+
+Si pendant le clic, le curseur dépasse le haut des zones ou le bas des zones, la petite ligne est désnapée.
+
+Qu'en penses-tu ?
+
+# - Fonctionnalité 8.1.0 : la première flèche de la guideline en double flèche pointe dans le mauvais sens (mais elle a la bonne origine)
+
+## - fonctionnalité 8.6.A : à priori cette règle a sauté : "si plus de deux lignes sont snapées à une grande ligne mais qu'elles sont pas toutes équidistantes, la fonctionnalité 'graduation assist' n'agit plus et on peut glisser les lignes de même taille snapées à la grande librement le long de celle ci (mais le snaping aux extrémités des lignes fonctionne encore)" est-ce que tu confirmes ?
+
+- le gris du palier 8.2 devrait être plus clair
+- toutes les "petites lignes", si elles sont snapées à une grande ligne et qu'un objet s'aligne sur l'axe de la petite ligne, devraient donner lieu à une guideline rose
+- dans le cas où le graduation assist est activé mais qu'il ne peut pas agir parce que les graduations ne sont plus équidistantes, et qu'on fait glisser des la guideline qui aparait sur la grande ligne devrait être rouge
+
+##- Le point d'ancrage d'alignement horizontal des zones de texte "à 50%" est utilisé par une textbox sélectionnée (elles devraient toute et toujours utiliser le point d'ancrage défini par la variable utilisateur).
+Si la textbox a plusieurs lignes de texte, on le seul point d'ancrage pour la guideline horizontale de centre devrait être pile à la moitié de la hauteur.
+
+Fonctionnalité :
+#- Aide à l'écriture d'un tableau : si une textbox est créée entre au moins 3 traits verticaux ou horizontaux, la textbox est centrée en X et Y par rapport à la case (on note la taille de la police à la créatio de la textbox dans une variable). Pendant l'écriture, la textbox est dynamiquement recentrée.
+Si pendant l'écriture, la textbox dépasse la taille de la case dans laquelle elle est centrée, la taille de la police est diminuée et la textbox est recentrée dynamiquement pour qu'elle ne dépasse plus (limite de taille minimale à 6pt pour cette fonctionnalité). à l'inverse, si la police actuelle est plus petite que celle stockée dans la variable, quand la textbox est modifiée on vérifie aussi si la taille peut être augmentée et si oui, on l'augmente autant que poossible jusqu'à ce que la taille actuelle soit égale à la variable stockée.
+Si une textbox qui est en mode "tableau" est entrain d'être modifiée, si l'utilisateur appuie sur une touche directionnelle et qu'il n'y a "plus la place" (le curseur est au bout du texte sur la droite et on appuie sur droite ou le curseur est tout à gauche du texte et on appuie sur gauche ou le curseur est sur la dernière ligne de la textbox et on appuie su rbas ou sur la première  ligne de la textbox et on appuie sur haut), on vérifie si il existe une case dans la direction concernée et si c'est le cas, est-ce qu'il existe déjà une textbox à l'intérieur (si oui, la textbox actuelle est désélectionnée et on "entre" dans cette autre textbox extstante (en mode édition et le curseur est à la fin du texte de cette textbox)), si non et que la case est vide, on désélectionne la textbox actuelle et on crée une nouvellle textbox centrée danns cette nouvelle case
+#- élargir la limite de case d'un px de chaque côté pour le resizing de texte
+#- Si la case n'a que trois côté, (prenons l'exemple si il manque la bordure gauche) le "millieu" sur l'axe X est la moitié de la distance entre l'extrémité de la ligne horieontale au dessus ou en dessous et la ligne de droite
+#- si une zone de texte est parfaitement centrée dans une case, lorsqu'elle est ouverte, elle  reprend les propriétés des textbox "qui sont créées centrées" (adaptation de la taille du texte et centrage dynamique)
+# On ne considère pas une "case" si ses 4 côtés ou ses 3 cotés et 2 extrémités des lignes ne sont pas visibles par l'utilisateur à l'écran
+
+ - aide au tracé de fonctions cosinus
+- compléteur type Texmaker dans la boite de dialogue écrivant du latex.
+
+- modifier le code de Dolphin pour ajouter une option cochable dans la configuration de Dolphin pour désactiver le rendu visuel de
