@@ -33,6 +33,8 @@ cp ~/Téléchargements/apply_alignment_snap_v11_2.py .
 #python3 apply_alignment_snap_v11_2.py
 cp ~/Téléchargements/apply_alignment_snap_v11_2_2.py .
 #python3 apply_alignment_snap_v11_2_2.py
+cp ~/Téléchargements/apply_alignment_snap_v11_8.py .
+#python3 apply_alignment_snap_v11_8.py
 
 # Compiler
 mkdir build
