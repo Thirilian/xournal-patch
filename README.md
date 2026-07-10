@@ -177,7 +177,7 @@ A guideline reaching th esnaping point at the extremity of an object will apear 
 
 A guideline reaching the snaping point at the X or Y center of an object will apear in green.
 
-If a small line (shorter than 15pt by default) crosses a long perpendicular line, a blue guideline will apear. This is the start of a "graduation assist" functionnality
+If a small line (shorter than 15pt by default) crosses a long perpendicular line, a blue guideline will apear and you'll be able to slide the small line across the long line or to snap the small to the long one's extremuties. This is the start of a "graduation assist" functionnality
 
 - 
 ### Patch #11 : apply_force_line_style_update_v2.py
