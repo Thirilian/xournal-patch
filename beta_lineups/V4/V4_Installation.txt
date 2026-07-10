@@ -1,0 +1,48 @@
+# cloner les sources
+cd ~/Documents
+git clone https://github.com/xournalpp/xournalpp
+cd xournalpp
+
+# Appliquer le patch
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_paste_follow_cursor_v3.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_txt_prefill.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_resize_ratio_v3.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_force_recompile.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_color_widget_v3.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_floating_marks_v2.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_fix_warnings.py
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_fine_arrow_move.py
+
+python3 apply_paste_follow_cursor_v3.py
+python3 apply_txt_prefill.py
+python3 apply_resize_ratio_v3.py
+python3 apply_force_recompile.py
+python3 apply_color_widget_v3.py
+python3 apply_floating_marks_v2.py
+python3 apply_fix_warnings.py # changes the code to avoid warnings on building. Can be uncommented
+python3 ~/apply_fine_arrow_move.py
+
+
+curl -O  https://raw.githubusercontent.com/Thirilian/xournal-patch/main/apply_arrow_resize_fix_v2.py
+python3 apply_arrow_resize_fix_v2.py
+
+cp ~/Téléchargements/apply_alignment_snap_v90_4.py .
+python3 apply_alignment_snap_v90_4.py
+
+cp ~/Téléchargements/apply_alignment_snap_v11_2.py .
+#python3 apply_alignment_snap_v11_2.py
+cp ~/Téléchargements/apply_alignment_snap_v11_2_2.py .
+#python3 apply_alignment_snap_v11_2_2.py
+
+# Compiler
+mkdir build
+cd build
+sudo cmake .. -DCMAKE_INSTALL_PREFIX=install -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+sudo cmake --build .
+sudo cmake --build . --target install
+sudo cmake --install . --prefix /usr/local
+xournalpp
+
+# retirer les fichiers de build
+cd
+sudo rm -rf ~/Documents/xournalpp
