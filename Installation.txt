@@ -26,6 +26,7 @@ python3 xournal-patch/beta_lineups/V4/apply_alignment_snap_v90_4.py
 # python3 xournal-patch/beta_lineups/V4/apply_alignment_snap_v11_2.py
 # python3 xournal-patch/beta_lineups/V4/apply_alignment_snap_v11_2_2.py
 python3 xournal-patch/beta_lineups/V4/apply_alignment_snap_v11_8.py
+python3 xournal-patch/beta_lineups/V4/apply_alignment_snap_v11_9.py
 
 python3 xournal-patch/apply_force_line_style_update_v2.py
 python3 xournal-patch/apply_table_writing_assist_v4.py
