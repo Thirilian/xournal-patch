@@ -1,0 +1,54 @@
+diff --git a/src/core/control/LatexController.cpp b/src/core/control/LatexController.cpp
+index 2404662..11b8d99 100644
+--- a/src/core/control/LatexController.cpp
++++ b/src/core/control/LatexController.cpp
+@@ -124,7 +124,12 @@ void LatexController::triggerImageUpdate(const string& texString) {
+     const std::string texContents = LatexGenerator::templateSub(texString, latexTemplate, textColor);
+     auto result = generator.asyncRun(texTmpDir, texContents);
+     if (auto* err = std::get_if<LatexGenerator::GenError>(&result)) {
+-        XojMsgBox::showErrorToUser(control->getGtkWindow(), err->message);
++        // Patch 14: shown inline in the dialog's own status/output area, exactly like an invalid-LaTeX
++        // error, rather than a separate modal popup - which would steal focus from (and potentially
++        // hide) the LaTeX dialog while the user might still be typing.
++        this->isValidTex = false;
++        this->texProcessOutput = err->message;
++        this->updateStatus();
+     } else if (auto** proc = std::get_if<GSubprocess*>(&result)) {
+         // Render the TeX and capture the process' output.
+         updating_cancellable = g_cancellable_new();
+@@ -176,10 +181,11 @@ void LatexController::onPdfRenderComplete(GObject* procObj, GAsyncResult* res, L
+             g_error_free(err);
+             return;
+         } else if (!g_error_matches(err, G_SPAWN_EXIT_ERROR, 1)) {
+-            // The error was not caused by invalid LaTeX.
+-            string message =
++            // The error was not caused by invalid LaTeX. Patch 14: shown inline (overwriting whatever
++            // was captured from stdout above, if anything, since this message is more relevant) rather
++            // than a separate modal popup - see triggerImageUpdate()'s own comment for why.
++            self->texProcessOutput =
+                     FS(_F("Latex generation encountered an error: {1} (exit code: {2})") % err->message % err->code);
+-            XojMsgBox::showErrorToUser(self->control->getGtkWindow(), message);
+         }
+ 
+         self->isValidTex = false;
+@@ -239,12 +245,17 @@ auto LatexController::loadRendered(string renderedTex) -> std::unique_ptr<TexIma
+     bool loaded = img->loadData(std::move(*contents), &err);
+ 
+     if (err != nullptr) {
+-        string message = FS(_F("Could not load LaTeX PDF file: {1}") % err->message);
+-        XojMsgBox::showErrorToUser(control->getGtkWindow(), message);
++        // Patch 14: shown inline (and isValidTex is reset to false, since this is a genuine failure
++        // discovered only after compilation itself succeeded) rather than a separate modal popup -
++        // see triggerImageUpdate()'s own comment for why. The caller (onPdfRenderComplete()) calls
++        // updateStatus() shortly after this returns, which will pick up both of these.
++        this->isValidTex = false;
++        this->texProcessOutput = FS(_F("Could not load LaTeX PDF file: {1}") % err->message);
+         g_error_free(err);
+         return nullptr;
+     } else if (!loaded || !img->getPdf()) {
+-        XojMsgBox::showErrorToUser(control->getGtkWindow(), FS(_F("Could not load LaTeX PDF file")));
++        this->isValidTex = false;
++        this->texProcessOutput = FS(_F("Could not load LaTeX PDF file"));
+         return nullptr;
+     }
+ 
