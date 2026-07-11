@@ -164,22 +164,54 @@ This patch rebinds Alt+Arrow key and adds a finer movement stage. Here are the n
 **Shift+Arrow key** movement with a 10-points step
 
 ### Patch #10 : 
-This patch adds the option in the edition menu to enable.disable object snaping, wich will allow for moving objects with alignment guides.
+This patch adds the option in the edition menu to enable/disable object snaping, wich will allow for moving objects with alignment guides.
+
+<img width="402" height="82" alt="image" src="https://github.com/user-attachments/assets/08ae0c61-fd33-4e33-9fe9-258ba7508d45" />
 
 This patch also adds a pannel to the preferences window to enable which sub function of this patch will be enabled for you.
 
 **All different functionnalities of this feature :**
 - basic snaping concept :
 
-Every existing object has 9 "snaping points". When two snaping points are aligned on the X or Y axis, the mobing object will be snaped and a two sided guideline will apear to indicate you of such. 
+Every existing object has 9 "snaping points". When two snaping points are aligned on the X or Y axis, the moving object will be snaped and a two sided guideline will apear to indicate you of such. 
+<img width="351" height="240" alt="image" src="https://github.com/user-attachments/assets/f0d108bb-1196-4210-8f10-02c08c7698af" />
+<img width="313" height="188" alt="image" src="https://github.com/user-attachments/assets/c048c14e-6c47-4594-a1ce-ebc34d854fcf" />
 
-A guideline reaching th esnaping point at the extremity of an object will apear in magenta. 
+A guideline reaching the snaping point at the extremity of an object will apear in magenta. 
+
+<img width="311" height="202" alt="image" src="https://github.com/user-attachments/assets/932342a4-f1ed-4eb3-82fb-32d76660a160" />
 
 A guideline reaching the snaping point at the X or Y center of an object will apear in green.
 
+<img width="262" height="275" alt="image" src="https://github.com/user-attachments/assets/2322d3e7-8b6d-481d-8f87-12bef202f66a" />
+
 If a small line (shorter than 15pt by default) crosses a long perpendicular line, a blue guideline will apear and you'll be able to slide the small line across the long line or to snap the small to the long one's extremuties. This is the start of a "graduation assist" functionnality
 
-- 
+<img width="807" height="131" alt="image" src="https://github.com/user-attachments/assets/ef1417f3-2df5-4aac-942d-18aabdf1e074" />
+
+<img width="807" height="131" alt="image" src="https://github.com/user-attachments/assets/f9b9d216-88c3-4bd6-a9b8-b5024dca8430" />
+
+- <img width="150" height="26" alt="image" src="https://github.com/user-attachments/assets/ca03117f-9162-4569-8b84-0ad4e7b2efd8" />
+
+if three moved objects are equidistanton an axis and are at least partially at the same position on an axis, pink double arrows will apear to signify an equidistant snaping.
+
+<img width="922" height="287" alt="image" src="https://github.com/user-attachments/assets/90144d9f-d9a1-443e-9461-b3a4320744e3" />
+
+- <img width="166" height="27" alt="image" src="https://github.com/user-attachments/assets/b4d64960-13b6-4050-b028-b48cd0684d4b" />
+
+will display a grey vertical line to snap to the center of the page. Adapts to the margin if present.
+
+<img width="838" height="757" alt="image" src="https://github.com/user-attachments/assets/48910280-75b0-4995-8f16-745d68fc1c48" />
+<img width="838" height="757" alt="image" src="https://github.com/user-attachments/assets/075734cc-024d-48b0-8a8d-ce42d152e7c6" />
+<img width="838" height="757" alt="image" src="https://github.com/user-attachments/assets/103f4f0c-b5f2-4469-8914-a8c0000b551d" />
+
+- Circle assist
+Will display guidelines while you draw to help you if you want to draw a perfect circle from the elipse tool
+
+<img width="164" height="172" alt="image" src="https://github.com/user-attachments/assets/039882e8-51df-4673-9c8d-2efa64694639" />
+
+
+
 ### Patch #11 : apply_force_line_style_update_v2.py
 So far, if you select a line style from the pen tool to update the line type of a selected object, and the line style you clicked is already selected by the tool, the line style of the object isn't updated. You have to select a different line style for the tool and reselect the style you wanted for the object to update.
 
