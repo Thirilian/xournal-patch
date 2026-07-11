@@ -192,3 +192,9 @@ If the textbox overflows boundaries, the text's size will lower until reaching 6
 (to come) using the arrow keys you can navigate the squares in a table wich will either create a centered textbox or open the textbox which is already in a nearby square.
 
 Using Ctrl+ Arrow key, you can navigate between textboxes even faster
+
+### Patch 13 : apply_latex_completion.py
+
+### Patch 14 : aapply_no_popup_during_typing.py
+
+
