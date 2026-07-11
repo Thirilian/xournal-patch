@@ -5,7 +5,7 @@ sudo apt-get install curl cmake ninja-build libgtk-3-dev libpoppler-glib-dev por
   libgtksourceview-4-dev help2man libqpdf-dev git
 
 # cloner les sources
-cd ~/Documents
+cd ~/Images
 git clone https://github.com/xournalpp/xournalpp
 cd xournalpp
 
@@ -19,7 +19,8 @@ python3 ~/Téléchargements/apply_latex_completion_13_5.py
 python3 ~/Téléchargements/apply_latex_completion_13_6.py
 python3 ~/Téléchargements/apply_latex_completion_13_8.py
 python3 ~/Téléchargements/apply_latex_completion_13_9.py
-#python3 ~/Téléchargements/apply_latex_completion_13_10.py
+python3 ~/Téléchargements/apply_latex_completion_13_10.py
+python3 ~/Téléchargements/apply_latex_completion_13_11.py
 
 # Compiler
 mkdir build
@@ -33,6 +34,6 @@ sudo cmake --install . --prefix /usr/local # Replace xournalapp /usr/bin/xournal
 
 # retirer les fichiers de build
 cd
-sudo rm -rf ~/Documents/xournalpp
+sudo rm -rf ~/Images/xournalpp
 
 xournalpp # launch xournal after build and installation
