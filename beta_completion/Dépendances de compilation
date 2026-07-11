@@ -1,0 +1,38 @@
+# Dépendances de compilation
+sudo apt-get update
+sudo apt-get install curl cmake ninja-build libgtk-3-dev libpoppler-glib-dev portaudio19-dev libsndfile-dev \
+  dvipng texlive libxml2-dev liblua5.4-dev libzip-dev librsvg2-dev gettext \
+  libgtksourceview-4-dev help2man libqpdf-dev git
+
+# cloner les sources
+cd ~/Documents
+git clone https://github.com/xournalpp/xournalpp
+cd xournalpp
+
+
+python3 ~/Téléchargements/apply_latex_completion_13_1.py
+python3 ~/Téléchargements/apply_latex_completion_13_1_1.py
+python3 ~/Téléchargements/apply_latex_completion_13_2.py
+python3 ~/Téléchargements/apply_latex_completion_13_3.py
+python3 ~/Téléchargements/apply_latex_completion_13_4.py
+python3 ~/Téléchargements/apply_latex_completion_13_5.py
+python3 ~/Téléchargements/apply_latex_completion_13_6.py
+python3 ~/Téléchargements/apply_latex_completion_13_8.py
+python3 ~/Téléchargements/apply_latex_completion_13_9.py
+#python3 ~/Téléchargements/apply_latex_completion_13_10.py
+
+# Compiler
+mkdir build
+cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=install -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build .
+sudo cmake --build . --target install
+sudo cmake --install . --prefix /usr/local # Replace xournalapp /usr/bin/xournalpp binary with the app you built
+                                           # Can lead to unexpected behaviours. Do it at your own risks
+                                           # In case of problems, reinstall xournalapp from your system package handler
+
+# retirer les fichiers de build
+cd
+sudo rm -rf ~/Documents/xournalpp
+
+xournalpp # launch xournal after build and installation
