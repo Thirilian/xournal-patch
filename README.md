@@ -194,7 +194,10 @@ If the textbox overflows boundaries, the text's size will lower until reaching 6
 Using Ctrl+ Arrow key, you can navigate between textboxes even faster
 
 ### Patch 13 : apply_latex_completion.py
+offers a completion feature when you type in the Tex window. The dictionary of completable termes can be customized through the LaTeX menu in the Preferences window.
 
-### Patch 14 : aapply_no_popup_during_typing.py
+The completion popup can be closed manually when pressing F1
 
+### Patch 14 : apply_no_popup_during_typing.py
+prevent any popup to apear and catch the focus wwhile you are typing through the Tex window
 
