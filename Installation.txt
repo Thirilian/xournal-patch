@@ -38,6 +38,7 @@ python3 xournal-patch/beta_completion/apply_latex_completion_13_14.py
 python3 xournal-patch/beta_completion/apply_latex_completion_13_15.py
 python3 xournal-patch/beta_completion/apply_latex_completion_13_16.py
 python3 xournal-patch/apply_no_popup_during_typing.py
+python3 xournal-patch/apply_floating_arrowhead.py
 
 # Compiler
 mkdir build
