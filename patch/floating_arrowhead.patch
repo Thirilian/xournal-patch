@@ -1,0 +1,618 @@
+diff --git a/src/core/control/Control.cpp b/src/core/control/Control.cpp
+index 29ddd0981..16927d91f 100644
+--- a/src/core/control/Control.cpp
++++ b/src/core/control/Control.cpp
+@@ -2455,6 +2455,13 @@ constexpr double CROSS_MARK_SIZE = 2.5;
+  */
+ constexpr double TICK_MARK_SIZE = 3.;
+ 
++/**
++ * Half-extent (in document points) of the arrowhead mark, both horizontally (from the tip to either
++ * leg's far end) and vertically (from the tip to the legs' base). Total visual span of the arrowhead
++ * is 2 * ARROWHEAD_SIZE wide and ARROWHEAD_SIZE tall.
++ */
++constexpr double ARROWHEAD_SIZE = 3.;
++
+ /**
+  * Creates a small Stroke (a cross or a tick mark, depending on localOffsets) using the currently
+  * selected tool's color and thickness, spawns it under the mouse pointer (or at the center of the
+@@ -2463,7 +2470,8 @@ constexpr double TICK_MARK_SIZE = 3.;
+  * localOffsets are pairs of (dx, dy), in document points, relative to the spawn point.
+  */
+ static void createFloatingMark(Control* ctrl, XournalView* xournal,
+-                                const std::vector<std::pair<double, double>>& localOffsets) {
++                                const std::vector<std::pair<double, double>>& localOffsets,
++                                bool snappableTip = false) {
+     double x = 0;
+     double y = 0;
+     XojPageView* view = getPageViewAndPosUnderCursor(xournal, x, y);
+@@ -2491,6 +2499,7 @@ static void createFloatingMark(Control* ctrl, XournalView* xournal,
+         stroke->setWidth(toolHandler->getToolThickness(TOOL_PEN)[TOOL_SIZE_FINE]);
+         stroke->setColor(toolHandler->getTool(TOOL_PEN).getColor());
+     }
++    stroke->setHasSnappableTip(snappableTip);
+     for (auto&& [dx, dy]: localOffsets) {
+         stroke->addPoint(Point(x + dx, y + dy));
+     }
+@@ -2528,6 +2537,19 @@ void Control::insertTickVertical() {
+     createFloatingMark(this, win->getXournal(), {{0, -TICK_MARK_SIZE}, {0, TICK_MARK_SIZE}});
+ }
+ 
++void Control::insertArrowHead() {
++    // A simple upward-pointing chevron/arrowhead ("^"), drawn as a single continuous 2-segment
++    // stroke: bottom-left leg end -> tip -> bottom-right leg end. Document Y grows downward, so the
++    // tip (pointing up) has the most negative Y offset of the three points. Patch 15.2/15.3: the
++    // object's bounding-box center (not the tip) is its single snappable anchor - see EditSelection's
++    // own handling of it.
++    createFloatingMark(this, win->getXournal(),
++                        {{-ARROWHEAD_SIZE, ARROWHEAD_SIZE},
++                         {0, -ARROWHEAD_SIZE},
++                         {ARROWHEAD_SIZE, ARROWHEAD_SIZE}},
++                        true);
++}
++
+ void Control::clipboardPaste(ElementPtr e) {
+     double x = 0;
+     double y = 0;
+diff --git a/src/core/control/Control.h b/src/core/control/Control.h
+index ed61625e7..31680a766 100644
+--- a/src/core/control/Control.h
++++ b/src/core/control/Control.h
+@@ -355,6 +355,12 @@ public:
+      */
+     void insertTickVertical();
+ 
++    /**
++     * Insert a small arrowhead mark (a single upward-pointing chevron at spawn), attached to the mouse
++     * pointer until the next left click. Uses the currently selected tool's color and thickness.
++     */
++    void insertArrowHead();
++
+     void help();
+ 
+     void selectAlpha(OpacityFeature feature);
+diff --git a/src/core/control/actions/ActionProperties.h b/src/core/control/actions/ActionProperties.h
+index c46d95d4d..8a2891fa4 100644
+--- a/src/core/control/actions/ActionProperties.h
++++ b/src/core/control/actions/ActionProperties.h
+@@ -197,6 +197,11 @@ struct ActionProperties<Action::INSERT_TICK_VERTICAL> {
+     static void callback(GSimpleAction*, GVariant*, Control* ctrl) { ctrl->insertTickVertical(); }
+ };
+ template <>
++struct ActionProperties<Action::INSERT_ARROWHEAD> {
++    static constexpr const char* accelerators[] = {"<Ctrl>L", nullptr};
++    static void callback(GSimpleAction*, GVariant*, Control* ctrl) { ctrl->insertArrowHead(); }
++};
++template <>
+ struct ActionProperties<Action::SEARCH> {
+     static void callback(GSimpleAction*, GVariant*, Control* ctrl) {
+         ctrl->clearSelectionEndText();
+diff --git a/src/core/control/tools/EditSelection.cpp b/src/core/control/tools/EditSelection.cpp
+index 183c5d937..2013f4d40 100644
+--- a/src/core/control/tools/EditSelection.cpp
++++ b/src/core/control/tools/EditSelection.cpp
+@@ -260,6 +260,189 @@ EditSelection::~EditSelection() {
+     finalizeSelection();
+ }
+ 
++/**
++ * Patch 15.2: pixel tolerance (in document points, independent of zoom) within which the arrowhead's
++ * tip snaps to the nearest point on another stroke's path. Deliberately a plain, independent
++ * constant here - not shared with alignment_snap's own tolerance setting (if that separate,
++ * independent patch series happens to be applied too), since this is an unrelated snapping
++ * mechanism (a single point onto a stroke's path, not a bounding box edge/center onto another's).
++ */
++constexpr double ARROWHEAD_SNAP_TOLERANCE = 8.0;
++
++/**
++ * Returns the closest point to `p` lying on the segment [a, b] (clamped to the segment, not the
++ * infinite line through it).
++ */
++static auto closestPointOnSegment(const Point& p, const Point& a, const Point& b) -> Point {
++    double abx = b.x - a.x;
++    double aby = b.y - a.y;
++    double lengthSq = abx * abx + aby * aby;
++    if (lengthSq < 1e-9) {
++        return a;  // degenerate (zero-length) segment
++    }
++    double t = ((p.x - a.x) * abx + (p.y - a.y) * aby) / lengthSq;
++    t = std::clamp(t, 0.0, 1.0);
++    return Point(a.x + t * abx, a.y + t * aby);
++}
++
++/// Normalizes an angle, in radians, into (-pi, pi].
++static auto normalizeAngle(double a) -> double {
++    while (a <= -M_PI) {
++        a += 2 * M_PI;
++    }
++    while (a > M_PI) {
++        a -= 2 * M_PI;
++    }
++    return a;
++}
++
++/**
++ * Patch 15.11: true if the given raw direction angle (atan2(dy, dx), this document's Y-down space)
++ * falls within the "normal" (non-inverted) arrowhead mode's allowed half of the compass - visually:
++ * from just past "left" (exclusive) through "up" to "right" (inclusive). The complementary half (used
++ * when the arrowhead is in "inverted" mode, see Stroke::isArrowHeadInverted()) is everything else:
++ * from just past "right" (exclusive) through "down" to "left" (inclusive). The two halves are exact
++ * diametric opposites of one another, split along the horizontal ("left"-"right") axis.
++ */
++static auto isNormalModeAngle(double rawAngle) -> bool {
++    constexpr double UP = -(M_PI / 2);
++    double rel = normalizeAngle(rawAngle - UP);
++    return rel > -(M_PI / 2) && rel <= (M_PI / 2);
++}
++
++void EditSelection::snapArrowHeadTip(double& dx, double& dy) {
++    auto elements = this->getElementsView();
++    if (elements.size() != 1) {
++        return;
++    }
++    const auto* stroke = dynamic_cast<const Stroke*>(*elements.begin());
++    if (!stroke || !stroke->hasSnappableTip() || stroke->getPointCount() < 3) {
++        return;
++    }
++
++    // Patch 15.4: CORRECTIF - EditSelection's own (x, y, width, height) is a PADDED view of the
++    // element's true bounds (see the constructor: a fixed 12-point margin added symmetrically on
++    // every side, "so anchors do not collapse even for horizontal/vertical strokes"). Mixing this
++    // padded x/y with the stroke's own unpadded getElementWidth()/Height() (patch 15.3's bug) shifted
++    // the computed center away from the true visual center by roughly that padding amount. Since the
++    // padding is symmetric, using this->width/height instead (which carry that exact same padding)
++    // cancels it out correctly: this->x + this->width / 2 always equals the element's own true
++    // center, regardless of the padding's actual value.
++    Point prospectiveTip{this->x + this->width / 2 + dx, this->y + this->height / 2 + dy};
++
++    Point best = prospectiveTip;
++    Point bestSegA{};
++    Point bestSegB{};
++    double bestDistSq = ARROWHEAD_SNAP_TOLERANCE * ARROWHEAD_SNAP_TOLERANCE;
++    bool found = false;
++    for (auto& elPtr: this->sourceLayer->getElements()) {
++        const Element* other = elPtr.get();
++        if (other == stroke) {
++            continue;
++        }
++        const auto* otherStroke = dynamic_cast<const Stroke*>(other);
++        if (!otherStroke) {
++            continue;
++        }
++        const auto& pts = otherStroke->getPointVector();
++        for (size_t i = 0; i + 1 < pts.size(); ++i) {
++            Point candidate = closestPointOnSegment(prospectiveTip, pts[i], pts[i + 1]);
++            double ddx = candidate.x - prospectiveTip.x;
++            double ddy = candidate.y - prospectiveTip.y;
++            double distSq = ddx * ddx + ddy * ddy;
++            if (distSq < bestDistSq) {
++                bestDistSq = distSq;
++                best = candidate;
++                bestSegA = pts[i];
++                bestSegB = pts[i + 1];
++                found = true;
++            }
++        }
++    }
++
++    if (found) {
++        dx += best.x - prospectiveTip.x;
++        dy += best.y - prospectiveTip.y;
++    }
++
++    // Patch 15.5/15.6: keep the arrowhead's own orientation in sync with the tangent of whichever
++    // segment it is (now) snapped to - see this method's own doc comment in the header for the full
++    // rule.
++    //
++    // Patch 15.9: CORRECTIF - the invisible vector (center to tip) must always be the reference for
++    // "up"/"down"/direction, which means it must be measured from the stroke's OWN CURRENT raw
++    // points, not assumed to always be -pi/2 ("up"). That assumption only holds for a
++    // freshly-spawned arrowhead: once a previous rotate-and-finalize cycle has baked a rotation into
++    // the raw points (from an earlier drag-and-snap, or an earlier "R" press), the raw tip no longer
++    // points up on its own - and this->rotation resets to 0 on every brand-new EditSelection (e.g.
++    // right after a deselect then re-select), so treating it as "relative to a fixed up" produced a
++    // mismatched orientation as soon as the arrowhead was re-selected. rawTipAngle below is
++    // recomputed fresh every time instead, directly from the three points as they currently stand.
++    constexpr double UP_ABS = -(M_PI / 2);
++    constexpr double DOWN_ABS = M_PI / 2;
++    bool inverted = stroke->isArrowHeadInverted();
++    Point rawTip = stroke->getPoint(1);
++    Point rawLegA = stroke->getPoint(0);
++    Point rawLegB = stroke->getPoint(2);
++    Point rawCenter{(rawLegA.x + rawLegB.x) / 2, (rawLegA.y + rawLegB.y) / 2};
++    double rawTipAngle = std::atan2(rawTip.y - rawCenter.y, rawTip.x - rawCenter.x);
++    if (!found) {
++        this->rotation = (inverted ? DOWN_ABS : UP_ABS) - rawTipAngle;
++        this->arrowHeadWasSnapped = false;
++        return;
++    }
++
++    double tangentA = std::atan2(bestSegB.y - bestSegA.y, bestSegB.x - bestSegA.x);
++    double tangentB = normalizeAngle(tangentA + M_PI);
++    double chosen;
++    if (!this->arrowHeadWasSnapped) {
++        // Patch 15.11: pick whichever of the two colinear tangent directions actually points within
++        // the current mode's allowed half of the compass (see isNormalModeAngle()'s own doc comment).
++        // Since that allowed half and its "inverted" complement are two exact diametric halves, and
++        // tangentA/tangentB are themselves always exactly 180 degrees apart, exactly one of the two is
++        // ever compliant with the current mode - the other is always compliant with the opposite mode.
++        // This replaces the previous "shortest rotation from up (normal) / down (inverted)" heuristic
++        // (patch 15.5/15.6), which could pick a direction violating the mode's allowed half.
++        bool tangentAOk = inverted ? !isNormalModeAngle(tangentA) : isNormalModeAngle(tangentA);
++        chosen = tangentAOk ? tangentA : tangentB;
++    } else {
++        // Remains snapped: whichever of the two tangent directions is closest to the current
++        // orientation, so it never suddenly flips 180 degrees while being dragged along a line.
++        // Same rule regardless of inverted mode - only the initial choice above differs by mode.
++        double currentOrientation = normalizeAngle(this->rotation + rawTipAngle);
++        double diffA = std::abs(normalizeAngle(tangentA - currentOrientation));
++        double diffB = std::abs(normalizeAngle(tangentB - currentOrientation));
++        chosen = diffA <= diffB ? tangentA : tangentB;
++    }
++    this->rotation = chosen - rawTipAngle;
++    this->arrowHeadWasSnapped = true;
++}
++
++/**
++ * Patch 15.6: see this method's own doc comment in the header.
++ */
++auto EditSelection::toggleArrowHeadInvert() -> bool {
++    auto elements = this->getElementsView();
++    if (elements.size() != 1) {
++        return false;
++    }
++    // Patch 15.7: CORRECTIF - getElementsView()'s iterator actually yields "const Element*" (despite
++    // the container's own template argument saying "Element*" - the const-ness is propagated by the
++    // const-qualified accessor method itself), so a direct dynamic_cast<Stroke*> doesn't compile
++    // (casting away constness). The underlying Stroke is genuinely mutable here (this same object is
++    // freely mutated elsewhere, e.g. in finalizeSelection()), so a const_cast on top of a const
++    // dynamic_cast is safe and standard practice for this situation.
++    const auto* constStroke = dynamic_cast<const Stroke*>(*elements.begin());
++    auto* stroke = const_cast<Stroke*>(constStroke);
++    if (!stroke || !stroke->hasSnappableTip()) {
++        return false;
++    }
++    stroke->setArrowHeadInverted(!stroke->isArrowHeadInverted());
++    this->rotation = normalizeAngle(this->rotation + M_PI);
++    this->view->getXournal()->repaintSelection();
++    return true;
++}
++
+ /**
+  * Finishes all pending changes, move the elements, scale the elements and add
+  * them to new layer if any or to the old if no new layer
+@@ -589,7 +772,12 @@ void EditSelection::mouseMove(double mouseX, double mouseY, bool alt) {
+ 
+         // move
+         if (!this->edgePanInhibitNext) {
+-            moveSelection(p.x - cx, p.y - cy);
++            double moveDx = p.x - cx;
++            double moveDy = p.y - cy;
++            // Patch 15.2: possibly adjusts the move so an arrowhead's tip lands on the nearest point
++            // of another stroke's path - a no-op for any other kind of selection.
++            snapArrowHeadTip(moveDx, moveDy);
++            moveSelection(moveDx, moveDy);
+             this->setEdgePan(true);
+         } else {
+             this->edgePanInhibitNext = false;
+diff --git a/src/core/control/tools/EditSelection.h b/src/core/control/tools/EditSelection.h
+index 6432f7ddc..9ed74a2e4 100644
+--- a/src/core/control/tools/EditSelection.h
++++ b/src/core/control/tools/EditSelection.h
+@@ -245,6 +245,15 @@ public:
+      */
+     void moveSelection(double dx, double dy, bool addMoveUndo = false);
+ 
++    /**
++     * Patch 15.6: if this selection is a single Stroke with hasSnappableTip() (an arrowhead mark),
++     * toggles its "inverted" mode (Stroke::setArrowHeadInverted()) and immediately rotates it by 180
++     * degrees (this->rotation += pi) to match. Returns true if applied (there was a single arrowhead
++     * selected), false otherwise (nothing to do - the caller can then let the key press fall through
++     * to whatever it would otherwise do). Public: called from XournalView::onKeyPressEvent() on "R".
++     */
++    bool toggleArrowHeadInvert();
++
+     /**
+      * Get the cursor type for the current position (if 0 then the default cursor should be used)
+      */
+@@ -326,6 +335,31 @@ private:
+      */
+     void finalizeSelection();
+ 
++    /**
++     * Patch 15.2/15.5: if this selection is a single Stroke with hasSnappableTip() (an arrowhead
++     * mark, see Control::insertArrowHead()), its bounding-box center is a single snappable anchor
++     * point: whenever the selection is moved, that point magnetically snaps to the nearest point
++     * along any other stroke's own path on the source layer (found by projecting the tip onto every
++     * line segment of every other stroke, clamped to the segment, and keeping the closest result
++     * overall), within a fixed pixel tolerance - no guideline is drawn for this, unlike
++     * alignment_snap. Given the proposed (dx, dy) translation, adjusts it in place so the tip lands
++     * exactly on the nearest qualifying point, if one is close enough; otherwise leaves it untouched.
++     *
++     * Patch 15.5: also keeps the arrowhead's own orientation (this->rotation) in sync with the
++     * tangent direction of whichever segment it is currently snapped to, imagining an invisible
++     * vector from the object's center to its own tip:
++     * - Not snapped: orientation resets to "pointing up" (this->rotation = 0, its as-drawn
++     *   orientation).
++     * - Newly snapped (was not snapped on the previous call): of the segment's two possible tangent
++     *   directions (180 degrees apart), the one reached by the shortest counterclockwise rotation
++     *   starting from "up" is used.
++     * - Remains snapped (was already snapped on the previous call, whether to the same point or a
++     *   different one reached by continuing to drag along the stroke(s)): of the two tangent
++     *   directions, the one closest to the arrowhead's current orientation is used instead, so it
++     *   never suddenly flips 180 degrees while being dragged smoothly along a line.
++     */
++    void snapArrowHeadTip(double& dx, double& dy);
++
+     /**
+      * Gets the PageView under the cursor
+      */
+@@ -367,6 +401,10 @@ private:  // DATA
+     double y{};
+     double rotation = 0;
+ 
++    /// Patch 15.5: tracks whether the arrowhead's single anchor point was snapped to another
++    /// stroke on the PREVIOUS call to snapArrowHeadTip() - see that method's own doc comment.
++    bool arrowHeadWasSnapped = false;
++
+     /**
+      * Use to translate to rotated selection
+      */
+diff --git a/src/core/control/xojfile/DocumentBuilderInterface.h b/src/core/control/xojfile/DocumentBuilderInterface.h
+index 289e4b9da..844ef3ae1 100644
+--- a/src/core/control/xojfile/DocumentBuilderInterface.h
++++ b/src/core/control/xojfile/DocumentBuilderInterface.h
+@@ -48,7 +48,8 @@ public:
+     virtual void addLayer(const std::optional<std::string_view>& name) = 0;
+     virtual void finalizeLayer() = 0;
+     virtual void addStroke(StrokeTool tool, Color color, double width, int fill, StrokeCapStyle capStyle,
+-                           const LineStyle& lineStyle, fs::path filename, size_t timestamp) = 0;
++                           const LineStyle& lineStyle, fs::path filename, size_t timestamp,
++                           bool snappableTip = false, bool arrowHeadInverted = false) = 0;
+     virtual void setStrokePoints(std::vector<Point> pointVector, bool hasPressure) = 0;
+     virtual void finalizeStroke() = 0;
+     virtual void addText(std::string font, double size, double x, double y, Color color, fs::path filename,
+diff --git a/src/core/control/xojfile/LoadHandler.cpp b/src/core/control/xojfile/LoadHandler.cpp
+index cce086e6c..52e8842f8 100644
+--- a/src/core/control/xojfile/LoadHandler.cpp
++++ b/src/core/control/xojfile/LoadHandler.cpp
+@@ -302,7 +302,8 @@ void LoadHandler::finalizeLayer() {
+ }
+ 
+ void LoadHandler::addStroke(StrokeTool tool, Color color, double width, int fill, StrokeCapStyle capStyle,
+-                            const LineStyle& lineStyle, fs::path filename, size_t timestamp) {
++                            const LineStyle& lineStyle, fs::path filename, size_t timestamp, bool snappableTip,
++                            bool arrowHeadInverted) {
+     xoj_assert(!this->stroke);
+     this->stroke = std::make_unique<Stroke>();
+ 
+@@ -312,6 +313,8 @@ void LoadHandler::addStroke(StrokeTool tool, Color color, double width, int fill
+     this->stroke->setFill(fill);
+     this->stroke->setStrokeCapStyle(capStyle);
+     this->stroke->setLineStyle(lineStyle);
++    this->stroke->setHasSnappableTip(snappableTip);
++    this->stroke->setArrowHeadInverted(arrowHeadInverted);
+ 
+     setAudioAttributes(*this->stroke, std::move(filename), timestamp);
+ }
+diff --git a/src/core/control/xojfile/LoadHandler.h b/src/core/control/xojfile/LoadHandler.h
+index 8fd66b78f..d9130727f 100644
+--- a/src/core/control/xojfile/LoadHandler.h
++++ b/src/core/control/xojfile/LoadHandler.h
+@@ -96,7 +96,8 @@ private:
+     void addLayer(const std::optional<std::string_view>& name) override;
+     void finalizeLayer() override;
+     void addStroke(StrokeTool tool, Color color, double width, int fill, StrokeCapStyle capStyle,
+-                   const LineStyle& lineStyle, fs::path filename, size_t timestamp) override;
++                   const LineStyle& lineStyle, fs::path filename, size_t timestamp,
++                   bool snappableTip = false, bool arrowHeadInverted = false) override;
+     void setStrokePoints(std::vector<Point> pointVector, bool hasPressure) override;
+     void finalizeStroke() override;
+     void addText(std::string font, double size, double x, double y, Color color, fs::path filename,
+diff --git a/src/core/control/xojfile/SaveHandler.cpp b/src/core/control/xojfile/SaveHandler.cpp
+index 17446a4e8..129d91a80 100644
+--- a/src/core/control/xojfile/SaveHandler.cpp
++++ b/src/core/control/xojfile/SaveHandler.cpp
+@@ -163,6 +163,17 @@ void SaveHandler::visitStrokeExtended(XmlPointNode* stroke, const Stroke* s) {
+     if (s->getLineStyle().hasDashes()) {
+         stroke->setAttrib(xoj::xml_attrs::STYLE_STR, StrokeStyle::formatStyle(s->getLineStyle()));
+     }
++
++    // Patch 15.2: only written for strokes that actually have it, same convention as FILL_STR/STYLE_STR
++    // above, to avoid bloating every stroke's XML with an attribute only relevant to arrowhead marks.
++    if (s->hasSnappableTip()) {
++        stroke->setAttrib(xoj::xml_attrs::SNAPPABLE_TIP_STR, "true");
++    }
++
++    // Patch 15.6: same convention - only written when actually inverted.
++    if (s->isArrowHeadInverted()) {
++        stroke->setAttrib(xoj::xml_attrs::ARROWHEAD_INVERTED_STR, "true");
++    }
+ }
+ 
+ void SaveHandler::visitLayer(XmlNode* page, const Layer* l) {
+diff --git a/src/core/control/xojfile/XmlAttrs.h b/src/core/control/xojfile/XmlAttrs.h
+index 011fe1d9a..fbc991fed 100644
+--- a/src/core/control/xojfile/XmlAttrs.h
++++ b/src/core/control/xojfile/XmlAttrs.h
+@@ -45,6 +45,10 @@ constexpr auto TOOL_STR = u8"tool";
+ constexpr auto PRESSURES_STR = u8"pressures";
+ constexpr auto FILL_STR = u8"fill";
+ constexpr auto CAPSTYLE_STR = u8"capStyle";
++/// Patch 15.2: see Stroke::hasSnappableTip()'s own doc comment.
++constexpr auto SNAPPABLE_TIP_STR = u8"snappableTip";
++/// Patch 15.6: see Stroke::isArrowHeadInverted()'s own doc comment.
++constexpr auto ARROWHEAD_INVERTED_STR = u8"arrowHeadInverted";
+ 
+ // text
+ constexpr auto FONT_STR = u8"font";  // also in link
+diff --git a/src/core/control/xojfile/XmlParser.cpp b/src/core/control/xojfile/XmlParser.cpp
+index b0382c7ab..9491b8088 100644
+--- a/src/core/control/xojfile/XmlParser.cpp
++++ b/src/core/control/xojfile/XmlParser.cpp
+@@ -362,6 +362,16 @@ void XmlParser::parseStrokeTag(const XmlParserHelper::AttributeMap& attributeMap
+     const auto lineStyle =
+             XmlParserHelper::getAttribMandatory<LineStyle>(xoj::xml_attrs::STYLE_STR, attributeMap, {}, false);
+ 
++    // Patch 15.2: snappable tip marker (arrowhead marks) - optional, absent for every ordinary stroke.
++    const auto snappableTipSV =
++            XmlParserHelper::getAttrib<std::string_view>(xoj::xml_attrs::SNAPPABLE_TIP_STR, attributeMap);
++    const bool snappableTip = snappableTipSV.has_value() && *snappableTipSV == "true";
++
++    // Patch 15.6: "inverted" arrowhead marker - optional, absent unless the user pressed R.
++    const auto arrowHeadInvertedSV =
++            XmlParserHelper::getAttrib<std::string_view>(xoj::xml_attrs::ARROWHEAD_INVERTED_STR, attributeMap);
++    const bool arrowHeadInverted = arrowHeadInvertedSV.has_value() && *arrowHeadInvertedSV == "true";
++
+     // audio filename and timestamp
+     const auto optFilename = XmlParserHelper::getAttrib<fs::path>(xoj::xml_attrs::AUDIO_FILENAME_STR, attributeMap);
+     if (optFilename && !optFilename->empty()) {
+@@ -375,7 +385,7 @@ void XmlParser::parseStrokeTag(const XmlParserHelper::AttributeMap& attributeMap
+ 
+     // forward data to builder
+     this->builder.addStroke(tool, color, width, fill, capStyle, lineStyle, std::move(this->tempFilename),
+-                            this->tempTimestamp);
++                            this->tempTimestamp, snappableTip, arrowHeadInverted);
+ 
+     // Reset timestamp, filename was already moved from
+     this->tempTimestamp = 0;
+diff --git a/src/core/enums/Action.enum.h b/src/core/enums/Action.enum.h
+index fa263a7ae..867b208cb 100644
+--- a/src/core/enums/Action.enum.h
++++ b/src/core/enums/Action.enum.h
+@@ -179,6 +179,7 @@ enum class Action : size_t {
+     INSERT_CROSS,
+     INSERT_TICK_HORIZONTAL,
+     INSERT_TICK_VERTICAL,
++    INSERT_ARROWHEAD,
+ 
+     // Keep this last value
+     ENUMERATOR_COUNT
+diff --git a/src/core/enums/generated/Action.NameMap.generated.h b/src/core/enums/generated/Action.NameMap.generated.h
+index 322b9b901..8a87f300d 100644
+--- a/src/core/enums/generated/Action.NameMap.generated.h
++++ b/src/core/enums/generated/Action.NameMap.generated.h
+@@ -122,4 +122,5 @@ constexpr const char* ACTION_NAMES[] = {  // Action to string conversion map
+         "position-highlighting",
+         "insert-cross",
+         "insert-tick-horizontal",
+-        "insert-tick-vertical"};
++        "insert-tick-vertical",
++        "insert-arrowhead"};
+diff --git a/src/core/gui/XournalView.cpp b/src/core/gui/XournalView.cpp
+index 333cf95ca..d7d4b60f1 100644
+--- a/src/core/gui/XournalView.cpp
++++ b/src/core/gui/XournalView.cpp
+@@ -174,6 +174,15 @@ auto XournalView::onKeyPressEvent(const KeyEvent& event) -> bool {
+             return true;
+         }
+ 
++        // Patch 15.6: R toggles an arrowhead mark's "inverted" mode (see
++        // EditSelection::toggleArrowHeadInvert()'s own doc comment) - a no-op, falling through to
++        // whatever else "R" might otherwise do, if the selection isn't a single arrowhead.
++        if (keyval == GDK_KEY_r || keyval == GDK_KEY_R) {
++            if (selection->toggleArrowHeadInvert()) {
++                return true;
++            }
++        }
++
+         int d = REGULAR_MOVE_AMOUNT;
+         if (state == GDK_MOD1_MASK) {
+             d = SMALL_MOVE_AMOUNT;
+diff --git a/src/core/model/Stroke.cpp b/src/core/model/Stroke.cpp
+index 61d6e5b29..20d5ae449 100644
+--- a/src/core/model/Stroke.cpp
++++ b/src/core/model/Stroke.cpp
+@@ -108,6 +108,8 @@ auto Stroke::cloneStroke() const -> std::unique_ptr<Stroke> {
+     s->Element::height = this->Element::height;
+     s->snappedBounds = this->snappedBounds;
+     s->sizeCalculated = this->sizeCalculated;
++    s->snappableTip = this->snappableTip;
++    s->arrowHeadInverted = this->arrowHeadInverted;
+     return s;
+ }
+ 
+@@ -179,6 +181,10 @@ void Stroke::serialize(ObjectOutputStream& out) const {
+ 
+     out.writeInt(this->capStyle);
+ 
++    out.writeInt(this->snappableTip ? 1 : 0);
++
++    out.writeInt(this->arrowHeadInverted ? 1 : 0);
++
+     out.writeData(this->points.data(), this->points.size(), sizeof(Point));
+ 
+     this->lineStyle.serialize(out);
+@@ -199,6 +205,10 @@ void Stroke::readSerialized(ObjectInputStream& in) {
+ 
+     this->capStyle = static_cast<StrokeCapStyle::Value>(in.readInt());
+ 
++    this->snappableTip = in.readInt() != 0;
++
++    this->arrowHeadInverted = in.readInt() != 0;
++
+     in.readData(this->points);
+     this->lineStyle.readSerialized(in);
+ 
+@@ -864,6 +874,14 @@ auto Stroke::getStrokeCapStyle() const -> StrokeCapStyle { return this->capStyle
+ 
+ void Stroke::setStrokeCapStyle(const StrokeCapStyle capStyle) { this->capStyle = capStyle; }
+ 
++auto Stroke::hasSnappableTip() const -> bool { return this->snappableTip; }
++
++void Stroke::setHasSnappableTip(bool value) { this->snappableTip = value; }
++
++auto Stroke::isArrowHeadInverted() const -> bool { return this->arrowHeadInverted; }
++
++void Stroke::setArrowHeadInverted(bool value) { this->arrowHeadInverted = value; }
++
+ void Stroke::debugPrint() const {
+     g_message("%s", FC(FORMAT_STR("Stroke {1} / hasPressure() = {2}") % (int64_t)this % this->hasPressure()));
+ 
+diff --git a/src/core/model/Stroke.h b/src/core/model/Stroke.h
+index 9d08fa3dd..00b0c53b9 100644
+--- a/src/core/model/Stroke.h
++++ b/src/core/model/Stroke.h
+@@ -202,6 +202,31 @@ public:
+     StrokeCapStyle getStrokeCapStyle() const;
+     void setStrokeCapStyle(const StrokeCapStyle capStyle);
+ 
++    /**
++     * Patch 15.2: true for a stroke created as an arrowhead mark (Control::insertArrowHead(), Ctrl+L)
++     * - its bounding-box center is treated as a single snappable
++     * anchor point: while this stroke is being moved, that point magnetically snaps to the nearest
++     * point along any other stroke's own path (no guideline shown, unlike alignment_snap - see
++     * EditSelection). Persisted to the .xopp file (SaveHandler/XmlParser) so the behavior survives a
++     * save/reload, and copied on clone()/copy-paste, but intentionally NOT copied by
++     * applyStyleFrom() - it identifies this specific stroke, it isn't a reusable visual style.
++     */
++    bool hasSnappableTip() const;
++    void setHasSnappableTip(bool value);
++
++    /**
++     * Patch 15.6: whether this arrowhead mark is currently in "inverted" mode, toggled by pressing R
++     * while it is selected (see EditSelection::toggleArrowHeadInvert()). Meaningless unless
++     * hasSnappableTip() is also true. When false ("normal"): an unsnapped arrowhead points up, and a
++     * newly-snapped one is oriented by the shortest counterclockwise rotation from up. When true
++     * ("inverted"): an unsnapped arrowhead points down instead, and a newly-snapped one is oriented by
++     * the shortest CLOCKWISE rotation from down instead - see EditSelection::snapArrowHeadTip().
++     * Persisted to the .xopp file (SaveHandler/XmlParser), and copied on clone()/copy-paste, but
++     * intentionally NOT copied by applyStyleFrom() - same reasoning as hasSnappableTip() above.
++     */
++    bool isArrowHeadInverted() const;
++    void setArrowHeadInverted(bool value);
++
+     [[maybe_unused]] void debugPrint() const;
+ 
+ public:
+@@ -239,4 +264,10 @@ private:
+     int fill = -1;
+ 
+     StrokeCapStyle capStyle = StrokeCapStyle::ROUND;
++
++    /// Patch 15.2: see hasSnappableTip()'s own doc comment above.
++    bool snappableTip = false;
++
++    /// Patch 15.6: see isArrowHeadInverted()'s own doc comment above.
++    bool arrowHeadInverted = false;
+ };
