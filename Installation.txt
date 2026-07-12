@@ -31,12 +31,7 @@ python3 xournal-patch/beta_lineups/V4/apply_alignment_snap_v11_9.py
 
 python3 xournal-patch/apply_force_line_style_update_v2.py
 python3 xournal-patch/apply_table_writing_assist_v4.py
-python3 xournal-patch/apply_latex_completion.py
-python3 xournal-patch/beta_completion/apply_latex_completion_13_12.py
-python3 xournal-patch/beta_completion/apply_latex_completion_13_13.py
-python3 xournal-patch/beta_completion/apply_latex_completion_13_14.py
-python3 xournal-patch/beta_completion/apply_latex_completion_13_15.py
-python3 xournal-patch/beta_completion/apply_latex_completion_13_16.py
+python3 xournal-patch/apply_latex_completion_v2.py
 python3 xournal-patch/apply_no_popup_during_typing.py
 python3 xournal-patch/apply_floating_arrowhead.py
 
