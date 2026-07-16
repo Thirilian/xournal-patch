@@ -195,7 +195,7 @@ If a small line (shorter than 15pt by default) crosses a long perpendicular line
 ________________________________________________________________________________________________________
 - <img width="150" height="26" alt="image" src="https://github.com/user-attachments/assets/ca03117f-9162-4569-8b84-0ad4e7b2efd8" />
 
-if three moved objects are equidistanton an axis and are at least partially at the same position on an axis, pink double arrows will apear to signify an equidistant snaping.
+if three moved objects are equidistant on an axis and are at least partially at the same position on an axis, pink double arrows will apear to signify an equidistant snaping.
 
 <img width="922" height="287" alt="image" src="https://github.com/user-attachments/assets/90144d9f-d9a1-443e-9461-b3a4320744e3" />
 
@@ -204,9 +204,9 @@ ________________________________________________________________________________
 
 will display a grey vertical line to snap to the center of the page. Adapts to the margin if present.
 
-<img width="838" height="757" alt="image" src="https://github.com/user-attachments/assets/48910280-75b0-4995-8f16-745d68fc1c48" />
-<img width="838" height="757" alt="image" src="https://github.com/user-attachments/assets/075734cc-024d-48b0-8a8d-ce42d152e7c6" />
-<img width="838" height="757" alt="image" src="https://github.com/user-attachments/assets/103f4f0c-b5f2-4469-8914-a8c0000b551d" />
+<img width="310" height="280" alt="image" src="https://github.com/user-attachments/assets/48910280-75b0-4995-8f16-745d68fc1c48" />
+<img width="310" height="280" alt="image" src="https://github.com/user-attachments/assets/075734cc-024d-48b0-8a8d-ce42d152e7c6" />
+<img width="310" height="280" alt="image" src="https://github.com/user-attachments/assets/103f4f0c-b5f2-4469-8914-a8c0000b551d" />
 
 ________________________________________________________________________________________________________
 - <img width="106" height="25" alt="image" src="https://github.com/user-attachments/assets/b96af6f0-ff11-49e9-966d-bc21594a9f21" />
