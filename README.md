@@ -245,7 +245,7 @@ moving or snaping a new graduation of that size will fallback to the first useca
 ________________________________________________________________________________________________________
 - <img width="180" height="28" alt="image" src="https://github.com/user-attachments/assets/d23c3487-2896-4640-85fb-258ad8ea3efb" />
 
-whenever moving a graduation, you can "dffrag it" to the top or bottom side of the long line. This would make the blue guideline and the graduation you are moving "move up" or "move down". If you are letting go of the graduation when it's in a new state, every graduation of the same size will be moved to follow the direction of the graduation you dragged
+whenever moving a graduation, you can "drag it" to the top or bottom side of the long line. This would make the blue guideline and the graduation you are moving "move up" or "move down". If you are letting go of the graduation when it's in a new state, every graduation of the same size will be moved to follow the direction of the graduation you dragged
 
 <img width="826" height="118" alt="image" src="https://github.com/user-attachments/assets/08263130-6680-41e4-9d75-b0410ab74250" />
 
@@ -267,11 +267,13 @@ Trying to move
 
 in the square of a table will make yellow guidelines appear to show when the content is centered on the X or Y axis of this square
 
-<img width="838" height="461" alt="image" src="https://github.com/user-attachments/assets/587a792f-1bf8-4890-9b34-0d0d61a938c9" />
+<img width="670" height="368.8" alt="image" src="https://github.com/user-attachments/assets/587a792f-1bf8-4890-9b34-0d0d61a938c9" />
 
 (it also works on 3-sided table squares) 
-<img width="856" height="461" alt="image" src="https://github.com/user-attachments/assets/7f78fbec-2310-4be3-a5ca-cc8d6a36f323" />
 
+<img width="684.8" height="368.8" alt="image" src="https://github.com/user-attachments/assets/7f78fbec-2310-4be3-a5ca-cc8d6a36f323" />
+
+________________________________________________________________________________________________________
 - <img width="221" height="29" alt="image" src="https://github.com/user-attachments/assets/d52b2cfc-cd43-42a9-ab75-eaab968219ef" />
 
 while drawing a spline, its moving point can snap to evrey guideline possible.
@@ -279,7 +281,7 @@ while drawing a spline, its moving point can snap to evrey guideline possible.
 <img width="560" height="420" alt="image" src="https://github.com/user-attachments/assets/a3578231-8a58-4901-841e-eb56e307bd07" />
 
 ________________________________________________________________________________________________________
-**A lot of settings of this feature can be tweakeed in the new available pannel called "Snapping" in the preferences window that patch #10 is adding**
+**A lot of settings of this feature can be tweaked in the new available pannel called "Snapping" in the preferences window that patch #10 is adding**
 
 ### Patch #11 : apply_force_line_style_update_v2.py
 So far, if you select a line style from the pen tool to update the line type of a selected object, and the line style you clicked is already selected by the tool, the line style of the object isn't updated. You have to select a different line style for the tool and reselect the style you wanted for the object to update.
@@ -295,9 +297,9 @@ If the textbox overflows boundaries, the text's size will lower until reaching 6
 
 Using the arrow keys you can navigate the squares in a table wich will either create a centered textbox or open the textbox which is already in a nearby square.
 
-<img width="822" height="483" alt="image" src="https://github.com/user-attachments/assets/a14c97bf-e36c-4be8-ad88-9833dbe0aafc" />
+<img width="411" height="241.5" alt="image" src="https://github.com/user-attachments/assets/a14c97bf-e36c-4be8-ad88-9833dbe0aafc" />
 
-<img width="822" height="483" alt="image" src="https://github.com/user-attachments/assets/87877e1f-0bd2-4b79-95f4-165ed93ab5b6" />
+<img width="411" height="241.5" alt="image" src="https://github.com/user-attachments/assets/87877e1f-0bd2-4b79-95f4-165ed93ab5b6" />
 
 
 (not done yet, future functionnality) using Ctrl+ Arrow key, you can navigate between textboxes even faster
@@ -338,12 +340,13 @@ By default, this arrowhead will point upwards.
 
 If this arrowhead is moved to a stroke of any kind, it will snap to it, pointing in the same direction (tangeant). It will point in a specific way (by default, ]-90°;+90°]). When selected, an arrow head can be flipped by 180° pressing "R".
 
-<img width="290" height="222" alt="image" src="https://github.com/user-attachments/assets/f8666f07-b98f-4d76-a63a-04bdb8c130e2" />
+<img width="139" height="123" alt="image" src="https://github.com/user-attachments/assets/ecb337ad-97e0-41ea-ada9-d9b5e3a1f8bc" />
 <img width="139" height="123" alt="image" src="https://github.com/user-attachments/assets/0f4adb21-5623-4bde-9069-3bd6bef0e5b9" />
+
+<img width="290" height="222" alt="image" src="https://github.com/user-attachments/assets/f8666f07-b98f-4d76-a63a-04bdb8c130e2" />
 <img width="509" height="123" alt="image" src="https://github.com/user-attachments/assets/0c695a4e-3222-443a-82c7-c620ef5094ea" />
 <img width="588" height="248" alt="image" src="https://github.com/user-attachments/assets/e094fe88-edd2-42cf-b38d-83cbd55bfdaf" />
 
-<img width="139" height="123" alt="image" src="https://github.com/user-attachments/assets/ecb337ad-97e0-41ea-ada9-d9b5e3a1f8bc" />
 
 An arrowhead which has been flipped once will point downwards by default ([-90°;+90°[)
 
