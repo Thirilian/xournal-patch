@@ -166,10 +166,11 @@ This patch rebinds Alt+Arrow key and adds a finer movement stage. Here are the n
 ### Patch #10 : 
 This patch adds the option in the edition menu to enable/disable object snaping, wich will allow for moving objects with alignment guides.
 
-<img width="402" height="82" alt="image" src="https://github.com/user-attachments/assets/08ae0c61-fd33-4e33-9fe9-258ba7508d45" />
+<img width="308" height="81" alt="image" src="https://github.com/user-attachments/assets/c8527f85-a866-4b2c-bdb5-1a6b5ac6de0f" />
 
 This patch also adds a pannel to the preferences window to enable which sub function of this patch will be enabled for you.
 
+________________________________________________________________________________________________________
 **All different functionnalities of this feature :**
 - basic snaping concept :
 
@@ -191,12 +192,14 @@ If a small line (shorter than 15pt by default) crosses a long perpendicular line
 
 <img width="807" height="131" alt="image" src="https://github.com/user-attachments/assets/f9b9d216-88c3-4bd6-a9b8-b5024dca8430" />
 
+________________________________________________________________________________________________________
 - <img width="150" height="26" alt="image" src="https://github.com/user-attachments/assets/ca03117f-9162-4569-8b84-0ad4e7b2efd8" />
 
 if three moved objects are equidistanton an axis and are at least partially at the same position on an axis, pink double arrows will apear to signify an equidistant snaping.
 
 <img width="922" height="287" alt="image" src="https://github.com/user-attachments/assets/90144d9f-d9a1-443e-9461-b3a4320744e3" />
 
+________________________________________________________________________________________________________
 - <img width="166" height="27" alt="image" src="https://github.com/user-attachments/assets/b4d64960-13b6-4050-b028-b48cd0684d4b" />
 
 will display a grey vertical line to snap to the center of the page. Adapts to the margin if present.
@@ -205,12 +208,14 @@ will display a grey vertical line to snap to the center of the page. Adapts to t
 <img width="838" height="757" alt="image" src="https://github.com/user-attachments/assets/075734cc-024d-48b0-8a8d-ce42d152e7c6" />
 <img width="838" height="757" alt="image" src="https://github.com/user-attachments/assets/103f4f0c-b5f2-4469-8914-a8c0000b551d" />
 
+________________________________________________________________________________________________________
 - <img width="106" height="25" alt="image" src="https://github.com/user-attachments/assets/b96af6f0-ff11-49e9-966d-bc21594a9f21" />
 
 Will display guidelines while you draw to help you if you want to draw a perfect circle from the elipse tool
 
 <img width="164" height="172" alt="image" src="https://github.com/user-attachments/assets/039882e8-51df-4673-9c8d-2efa64694639" />
 
+________________________________________________________________________________________________________
 - <img width="174" height="25" alt="image" src="https://github.com/user-attachments/assets/6fb36f77-d40a-4e93-8ec1-a18470f61112" />
 
 **If you have one graduation (small line shorter than 15pt) snapped to a long line**
@@ -235,6 +240,7 @@ moving or snaping a new graduation of that size will fallback to the first useca
 
 <img width="838" height="110" alt="image" src="https://github.com/user-attachments/assets/cf7a5e78-7a8f-4daa-8f20-e4893c356836" />
 
+________________________________________________________________________________________________________
 - <img width="180" height="28" alt="image" src="https://github.com/user-attachments/assets/d23c3487-2896-4640-85fb-258ad8ea3efb" />
 
 whenever moving a graduation, you can "dffrag it" to the top or bottom side of the long line. This would make the blue guideline and the graduation you are moving "move up" or "move down". If you are letting go of the graduation when it's in a new state, every graduation of the same size will be moved to follow the direction of the graduation you dragged
@@ -249,6 +255,7 @@ whenever moving a graduation, you can "dffrag it" to the top or bottom side of t
 
 (all of these operations can be performed on horizontal graduations snapped onto a vertical long line as well)
 
+________________________________________________________________________________________________________
 - <img width="213" height="29" alt="image" src="https://github.com/user-attachments/assets/364c1373-e9bb-476b-a828-b2118c064b8b" />
 
 Trying to move 
@@ -269,6 +276,7 @@ while drawing a spline, its moving point can snap to evrey guideline possible.
 
 <img width="560" height="420" alt="image" src="https://github.com/user-attachments/assets/a3578231-8a58-4901-841e-eb56e307bd07" />
 
+________________________________________________________________________________________________________
 **A lot of settings of this feature can be tweakeed in the new available pannel called "Snapping" in the preferences window that patch #10 is adding**
 
 ### Patch #11 : apply_force_line_style_update_v2.py
