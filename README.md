@@ -205,31 +205,146 @@ will display a grey vertical line to snap to the center of the page. Adapts to t
 <img width="838" height="757" alt="image" src="https://github.com/user-attachments/assets/075734cc-024d-48b0-8a8d-ce42d152e7c6" />
 <img width="838" height="757" alt="image" src="https://github.com/user-attachments/assets/103f4f0c-b5f2-4469-8914-a8c0000b551d" />
 
-- Circle assist
+- <img width="106" height="25" alt="image" src="https://github.com/user-attachments/assets/b96af6f0-ff11-49e9-966d-bc21594a9f21" />
+
 Will display guidelines while you draw to help you if you want to draw a perfect circle from the elipse tool
 
 <img width="164" height="172" alt="image" src="https://github.com/user-attachments/assets/039882e8-51df-4673-9c8d-2efa64694639" />
 
+- <img width="174" height="25" alt="image" src="https://github.com/user-attachments/assets/6fb36f77-d40a-4e93-8ec1-a18470f61112" />
 
+**If you have one graduation (small line shorter than 15pt) snapped to a long line**
+
+then you can slide it freely as shown above
+
+**If you have two graduations of the same size snapped to a long line**
+
+then sliding one will make small guidelines apear on the long line. These small guidelines will be perpendicular to the long line and the same lenght as the two small lines. The small guidelines will be equidistant from eachother depending on the distance you set between the two existing graduation.
+
+<img width="838" height="110" alt="image" src="https://github.com/user-attachments/assets/f454aaa1-9758-4508-923f-5acac0311ac1" />
+
+**If you have three or more graduations of the same size snapped to a long line**
+
+... and you are trying to snap a new one to the long line, all "slots" will be displayed and the new small line will be forced to snap at one
+
+<img width="838" height="110" alt="image" src="https://github.com/user-attachments/assets/29fe44e4-45f5-4490-a565-a0c41ef7a2b8" />
+
+**If you have three or more graduations of the same size snapped to a long line, but you managed to make them non-equidistant**
+
+moving or snaping a new graduation of that size will fallback to the first usecase (you can slide the graduation where you want on the long line), but the long line will have a red guideline to indicate you are in this "error-fallback" case
+
+<img width="838" height="110" alt="image" src="https://github.com/user-attachments/assets/cf7a5e78-7a8f-4daa-8f20-e4893c356836" />
+
+- <img width="180" height="28" alt="image" src="https://github.com/user-attachments/assets/d23c3487-2896-4640-85fb-258ad8ea3efb" />
+
+whenever moving a graduation, you can "dffrag it" to the top or bottom side of the long line. This would make the blue guideline and the graduation you are moving "move up" or "move down". If you are letting go of the graduation when it's in a new state, every graduation of the same size will be moved to follow the direction of the graduation you dragged
+
+<img width="826" height="118" alt="image" src="https://github.com/user-attachments/assets/08263130-6680-41e4-9d75-b0410ab74250" />
+
+<img width="826" height="118" alt="image" src="https://github.com/user-attachments/assets/e41b966e-f28d-42df-80f4-cdb8ea761b21" />
+
+<img width="826" height="118" alt="image" src="https://github.com/user-attachments/assets/a14c4763-3cd0-4293-98a0-571f6a528b15" />
+
+(a graduation can still be unsnapped if dragging further)
+
+(all of these operations can be performed on horizontal graduations snapped onto a vertical long line as well)
+
+- <img width="213" height="29" alt="image" src="https://github.com/user-attachments/assets/364c1373-e9bb-476b-a828-b2118c064b8b" />
+
+Trying to move 
+- a textbox
+- a Tex formula box
+- an image
+
+in the square of a table will make yellow guidelines appear to show when the content is centered on the X or Y axis of this square
+
+<img width="838" height="461" alt="image" src="https://github.com/user-attachments/assets/587a792f-1bf8-4890-9b34-0d0d61a938c9" />
+
+(it also works on 3-sided table squares) 
+<img width="856" height="461" alt="image" src="https://github.com/user-attachments/assets/7f78fbec-2310-4be3-a5ca-cc8d6a36f323" />
+
+- <img width="221" height="29" alt="image" src="https://github.com/user-attachments/assets/d52b2cfc-cd43-42a9-ab75-eaab968219ef" />
+
+while drawing a spline, its moving point can snap to evrey guideline possible.
+
+<img width="560" height="420" alt="image" src="https://github.com/user-attachments/assets/a3578231-8a58-4901-841e-eb56e307bd07" />
+
+**A lot of settings of this feature can be tweakeed in the new available pannel called "Snapping" in the preferences window that patch #10 is adding**
 
 ### Patch #11 : apply_force_line_style_update_v2.py
 So far, if you select a line style from the pen tool to update the line type of a selected object, and the line style you clicked is already selected by the tool, the line style of the object isn't updated. You have to select a different line style for the tool and reselect the style you wanted for the object to update.
 
 this patch fixes that.
+
+<img width="161" height="153" alt="image" src="https://github.com/user-attachments/assets/e28e9260-608e-44e0-a561-febaab585b68" />
+
 ### Patch #12 : apply_table_writing_assist.py
 when creating a textbox in a table's square, it spawns centered in that square.
 
 If the textbox overflows boundaries, the text's size will lower until reaching 6pt.
 
-(to come) using the arrow keys you can navigate the squares in a table wich will either create a centered textbox or open the textbox which is already in a nearby square.
+Using the arrow keys you can navigate the squares in a table wich will either create a centered textbox or open the textbox which is already in a nearby square.
 
-Using Ctrl+ Arrow key, you can navigate between textboxes even faster
+<img width="822" height="483" alt="image" src="https://github.com/user-attachments/assets/a14c97bf-e36c-4be8-ad88-9833dbe0aafc" />
+
+<img width="822" height="483" alt="image" src="https://github.com/user-attachments/assets/87877e1f-0bd2-4b79-95f4-165ed93ab5b6" />
+
+
+(not done yet, future functionnality) using Ctrl+ Arrow key, you can navigate between textboxes even faster
+
+**case of "vertical tables**
+If a table is exclusively composed of **multiple vertical lines** all crossed my **one unique horizontal line**, this feature will create "slots" acordingly.
+
+The hight of these slots will depend on the "hight" of the first row.
+
+<img width="308" height="589" alt="image" src="https://github.com/user-attachments/assets/23a28d13-f86f-471a-9451-912a48def38e" />
 
 ### Patch 13 : apply_latex_completion.py
-offers a completion feature when you type in the Tex window. The dictionary of completable termes can be customized through the LaTeX menu in the Preferences window.
+offers a completion feature when you type in the Tex window. 
+
+The dictionary of completable termes can be customized through the LaTeX menu in the Preferences window.
+
+You can also decide if (and which) placeholders will be placed after the command you typed, if this one contained placeholders, to help you navigate faster.
+
+You can use Tab/Shift+Tab to navigate between placeholders in the formula.
 
 The completion popup can be closed manually when pressing F1
+
+<img width="344" height="175" alt="image" src="https://github.com/user-attachments/assets/b7d7a4a2-c4e5-4653-af2a-ce1da3049000" />
+<img width="344" height="229" alt="image" src="https://github.com/user-attachments/assets/dcbb2f71-27ed-446c-aab9-00f90ab0fdec" />
+<img width="344" height="229" alt="image" src="https://github.com/user-attachments/assets/30309ece-ebcf-443c-99f0-8875ec96cc3e" />
+
+<img width="1018" height="222" alt="image" src="https://github.com/user-attachments/assets/eab44292-6632-4d87-b3d1-8e14f6b23aa4" />
 
 ### Patch 14 : apply_no_popup_during_typing.py
 prevent any popup to apear and catch the focus wwhile you are typing through the Tex window
 
+### Patch 15 : apply_no_popup_during_typing.py
+(this patch requires apply_floating_marks_v2.py and apply_paste_follow_cursor.py to be applied before it)
+
+with this patch, you can use Ctrl+L to make an arrow head (one-pieced object) spawn on the page, snapping to the cursor by default just like for patch #6.
+
+By default, this arrowhead will point upwards. 
+
+If this arrowhead is moved to a stroke of any kind, it will snap to it, pointing in the same direction (tangeant). It will point in a specific way (by default, ]-90°;+90°]). When selected, an arrow head can be flipped by 180° pressing "R".
+
+<img width="290" height="222" alt="image" src="https://github.com/user-attachments/assets/f8666f07-b98f-4d76-a63a-04bdb8c130e2" />
+<img width="139" height="123" alt="image" src="https://github.com/user-attachments/assets/0f4adb21-5623-4bde-9069-3bd6bef0e5b9" />
+<img width="509" height="123" alt="image" src="https://github.com/user-attachments/assets/0c695a4e-3222-443a-82c7-c620ef5094ea" />
+<img width="588" height="248" alt="image" src="https://github.com/user-attachments/assets/e094fe88-edd2-42cf-b38d-83cbd55bfdaf" />
+
+<img width="139" height="123" alt="image" src="https://github.com/user-attachments/assets/ecb337ad-97e0-41ea-ada9-d9b5e3a1f8bc" />
+
+An arrowhead which has been flipped once will point downwards by default ([-90°;+90°[)
+
+## Contact me
+- if you are from xournalpp team and would like to implement one of these features into the actual current source code (please don't implement one of these features without contacting me first)
+- if you have any question whatsoever
+- if you have a suggestion to make
+- if you encounter any issue related to one of the patches, the building process or the installation
+- if you see a typo or an issue (missing clarity ?) in the readme
+
+You can contact me
+- by creating an issue report (I don't mind, even if it's just to chat)
+- by creating a discussion topic
+- via mps
