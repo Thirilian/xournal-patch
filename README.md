@@ -1,4 +1,4 @@
-# xournal++ patches
+# Xournal++ patches
 for efficiency reasons, I had to do some changes to xournal++'  code to implement some ergonomy improvement features.
 
 Until I share this with xournal++' team, it will remain python patches.
