@@ -12,9 +12,9 @@ The repo can be found here : https://github.com/Thirilian/xournal_latex_compilin
 
   The 2nd patch `apply_txt_prefill.py` is only useful if you use the latex-compilation sh script
   
-- All of my ergonomy patches are related to LaTeX formula usage. I will keep improving this repo as well as the one mentionned above to make LaTeX' integration even smoother.
+- All of my ergonomy patches are created to suit my needs or fix a behaviour I consider being a bug. I will keep improving this repo as well as the one mentionned above to make Xournal++' use even smoother.
 - You should open the Installation.txt file and, once downloaded, **modify it if something doesn't suit your usecase**.
-- If you entcounter any issue, have any question or are working in xournalapp's team, feel free to contact me directly (via MP or creating an Issue report just to chat, I don't mind)
+- If you entcounter any issue, have any question or are working in xournalpp's team, feel free to contact me directly (via MP or creating an Issue report just to chat, I don't mind)
   
 ## How to use
 To install all available patches,  download and run the Installation.txt file (it's a script but it was meant to be instructions)
