@@ -14,7 +14,7 @@ The repo can be found here : https://github.com/Thirilian/xournal_latex_compilin
   
 - All of my ergonomy patches are created to suit my needs or fix a behaviour I consider being a bug. I will keep improving this repo as well as the one mentionned above to make Xournal++' use even smoother.
 - You should open the Installation.txt file and, once downloaded, **modify it if something doesn't suit your usecase**.
-- If you entcounter any issue, have any question or are working in xournalpp's team, feel free to contact me directly (via MP or creating an Issue report just to chat, I don't mind)
+- If you entcounter any issue, have any question or are working in xournalpp's team, feel free to contact me directly (via DMs or creating an Issue report just to chat, I don't mind)
   
 ## How to use
 To install all available patches,  download and run the Installation.txt file (it's a script but it was meant to be instructions)
@@ -175,7 +175,9 @@ ________________________________________________________________________________
 - basic snaping concept :
 
 Every existing object has 9 "snaping points". When two snaping points are aligned on the X or Y axis, the moving object will be snaped and a two sided guideline will apear to indicate you of such. 
+
 <img width="351" height="240" alt="image" src="https://github.com/user-attachments/assets/f0d108bb-1196-4210-8f10-02c08c7698af" />
+
 <img width="313" height="188" alt="image" src="https://github.com/user-attachments/assets/c048c14e-6c47-4594-a1ce-ebc34d854fcf" />
 
 A guideline reaching the snaping point at the extremity of an object will apear in magenta. 
@@ -318,9 +320,9 @@ You can use Tab/Shift+Tab to navigate between placeholders in the formula.
 
 The completion popup can be closed manually when pressing F1
 
-<img width="344" height="175" alt="image" src="https://github.com/user-attachments/assets/b7d7a4a2-c4e5-4653-af2a-ce1da3049000" />
-<img width="344" height="229" alt="image" src="https://github.com/user-attachments/assets/dcbb2f71-27ed-446c-aab9-00f90ab0fdec" />
-<img width="344" height="229" alt="image" src="https://github.com/user-attachments/assets/30309ece-ebcf-443c-99f0-8875ec96cc3e" />
+<img width="378" height="192" alt="image" src="https://github.com/user-attachments/assets/b7d7a4a2-c4e5-4653-af2a-ce1da3049000" />
+<img width="309" height="206" alt="image" src="https://github.com/user-attachments/assets/dcbb2f71-27ed-446c-aab9-00f90ab0fdec" />
+<img width="309" height="206" alt="image" src="https://github.com/user-attachments/assets/30309ece-ebcf-443c-99f0-8875ec96cc3e" />
 
 <img width="1018" height="222" alt="image" src="https://github.com/user-attachments/assets/eab44292-6632-4d87-b3d1-8e14f6b23aa4" />
 
@@ -355,4 +357,4 @@ An arrowhead which has been flipped once will point downwards by default ([-90°
 You can contact me
 - by creating an issue report (I don't mind, even if it's just to chat)
 - by creating a discussion topic
-- via mps
+- via DMs
