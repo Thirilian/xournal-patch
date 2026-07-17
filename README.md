@@ -138,7 +138,7 @@ rescaled :
 
 
 ### Patch #8 : apply_fix_warnings.py
-Note : Because it hasn't been reviewed yet, this patch is deactivated in the standard `Installation.txt` file
+Note : Code to review (can be deactivated in your Installation.txt after download)
 
 This patch just fixes the warnings that are currently generated while building the fresh xournalapp clone.
 
@@ -163,7 +163,7 @@ This patch rebinds Alt+Arrow key and adds a finer movement stage. Here are the n
 
 **Shift+Arrow key** movement with a 10-points step
 
-### Patch #10 : 
+### Patch #10 : apply_alignment_snap_v90_5.py
 This patch adds the option in the edition menu to enable/disable object snaping, wich will allow for moving objects with alignment guides.
 
 <img width="308" height="81" alt="image" src="https://github.com/user-attachments/assets/c8527f85-a866-4b2c-bdb5-1a6b5ac6de0f" />
